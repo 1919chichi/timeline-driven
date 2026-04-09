@@ -6,8 +6,14 @@ export default function TaskItem({ task, toggleTask, toggleTag, openEditModal })
 
   return (
     <div
-      onClick={(e) => toggleTask(task.id, e)}
-      className={`p-4 rounded-2xl shadow-sm border cursor-pointer flex justify-between items-center transition-all ${
+      onClick={(e) => {
+        if (!task.tags || task.tags.length === 0) {
+          toggleTask(task.id, e);
+        }
+      }}
+      className={`p-4 rounded-2xl shadow-sm border ${
+        (!task.tags || task.tags.length === 0) ? "cursor-pointer" : ""
+      } flex justify-between items-center transition-all ${
         done ? "opacity-50 border-green-200 bg-green-50/30" : "bg-white border-gray-100"
       }`}
     >
@@ -64,7 +70,7 @@ export default function TaskItem({ task, toggleTask, toggleTag, openEditModal })
           编辑
         </button>
         <div className="text-xl">
-          {done ? "✅" : "⭕"}
+          {done ? "✅" : ""}
         </div>
       </div>
     </div>
