@@ -45,6 +45,15 @@ export default function TodayPage() {
     localStorage.setItem("timetrackr_tasks", JSON.stringify(tasks));
   }, [tasks]);
 
+  const [historicalTags, setHistoricalTags] = useState(() => {
+    const saved = localStorage.getItem("timetrackr_historical_tags");
+    return saved ? JSON.parse(saved) : ["协战", "勾协", "寄养"];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("timetrackr_historical_tags", JSON.stringify(historicalTags));
+  }, [historicalTags]);
+
   const [showModal, setShowModal] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [newName, setNewName] = useState("");
@@ -53,7 +62,9 @@ export default function TodayPage() {
   const [newGroupName, setNewGroupName] = useState("");
   
   // 新增的数据字段
-  const [tagsInput, setTagsInput] = useState("");
+  const [modalTags, setModalTags] = useState([]);
+  const [tagInputValue, setTagInputValue] = useState("");
+  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [remarkInput, setRemarkInput] = useState("");
 
   const [startDate, setStartDate] = useState(getToday());
@@ -145,11 +156,13 @@ export default function TodayPage() {
     setEditingTaskId(task.id);
     setNewName(task.name);
     
-    const tagsString = (task.tags || []).map(t => {
-      if (typeof t === 'string') return t;
-      return t.max > 1 ? `${t.name}*${t.max}` : t.name;
-    }).join(", ");
-    setTagsInput(tagsString);
+    const parsedTags = (task.tags || []).map(t => {
+      if (typeof t === 'string') return { name: t, max: 1 };
+      return { ...t };
+    });
+    setModalTags(parsedTags);
+    setTagInputValue("");
+    setShowTagSuggestions(false);
     
     setRemarkInput(task.remark || "");
     setNewGroup(task.group || (groups[0] || "游戏代肝"));
@@ -162,7 +175,9 @@ export default function TodayPage() {
   const openAddModal = () => {
     setEditingTaskId(null);
     setNewName("");
-    setTagsInput("");
+    setModalTags([]);
+    setTagInputValue("");
+    setShowTagSuggestions(false);
     setRemarkInput("");
     setNewGroup(groups[0] || "游戏代肝");
     setNewGroupName("");
@@ -184,17 +199,23 @@ export default function TodayPage() {
       }
     }
 
-    // 解析 tags（逗号分隔，支持 名称*次数 或 名称x次数）
-    const tags = tagsInput
-      .split(/[,，+]/)
-      .map((t) => t.trim())
-      .filter((t) => t)
-      .map(t => {
-        const match = t.match(/^(.*?)(?:[*xX](\d+))?$/);
-        const name = match ? match[1].trim() : t;
-        const max = match && match[2] ? parseInt(match[2], 10) : 1;
-        return { name, max };
-      });
+    // 解析 tags
+    let finalTags = [...modalTags];
+    if (tagInputValue.trim()) {
+      const name = tagInputValue.trim();
+      const existing = finalTags.find(t => t.name === name);
+      if (existing) {
+        existing.max += 1;
+      } else {
+        finalTags.push({ name, max: 1 });
+      }
+    }
+
+    const newHistory = new Set(historicalTags);
+    finalTags.forEach(t => newHistory.add(t.name));
+    setHistoricalTags(Array.from(newHistory));
+
+    const tags = finalTags;
 
     if (editingTaskId) {
       setTasks((prev) => prev.map(t => {
@@ -398,14 +419,128 @@ export default function TodayPage() {
               />
             </div>
 
-            <div>
-              <label className="text-xs font-medium text-gray-500 mb-1 block">任务类型标签 (支持 标签*次数)</label>
-              <input
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                placeholder="例如: 协战, 勾协*2, 寄养"
-                className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
-              />
+            <div className="relative">
+              <label className="text-xs font-medium text-gray-500 mb-1 block">任务类型标签</label>
+              <div 
+                className="w-full border-b border-gray-200 focus-within:border-black min-h-[38px] transition-colors bg-gray-50 rounded-t flex flex-wrap gap-1.5 p-2 relative"
+                onClick={() => {
+                  const input = document.getElementById('tag-input');
+                  if (input) input.focus();
+                }}
+              >
+                {modalTags.map((tag, idx) => (
+                  <div key={idx} className="flex items-center bg-blue-100/50 border border-blue-200 text-blue-700 rounded-full px-2 py-0.5 text-xs transition-all">
+                    <span className="mr-1.5 font-medium">{tag.name}</span>
+                    <div className="flex items-center bg-white rounded-full shadow-sm px-0.5">
+                      <button 
+                        className="w-4 h-4 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newTags = [...modalTags];
+                          if (newTags[idx].max > 1) {
+                            newTags[idx].max -= 1;
+                            setModalTags(newTags);
+                          } else {
+                            setModalTags(newTags.filter((_, i) => i !== idx));
+                          }
+                        }}
+                      >-</button>
+                      <span className="w-3 text-[10px] text-center font-medium">{tag.max}</span>
+                      <button 
+                        className="w-4 h-4 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newTags = [...modalTags];
+                          newTags[idx].max += 1;
+                          setModalTags(newTags);
+                        }}
+                      >+</button>
+                    </div>
+                    <button 
+                      className="ml-1.5 w-4 h-4 flex items-center justify-center text-blue-400 hover:text-blue-600 hover:bg-blue-200 rounded-full transition-colors"
+                      onClick={(e) => {
+                         e.stopPropagation();
+                         setModalTags(modalTags.filter((_, i) => i !== idx));
+                      }}
+                    >×</button>
+                  </div>
+                ))}
+                <input
+                  id="tag-input"
+                  value={tagInputValue}
+                  onChange={(e) => {
+                    setTagInputValue(e.target.value);
+                    setShowTagSuggestions(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && tagInputValue.trim()) {
+                      e.preventDefault();
+                      const name = tagInputValue.trim();
+                      const existing = modalTags.find(t => t.name === name);
+                      if (existing) {
+                        setModalTags(modalTags.map(t => t.name === name ? {...t, max: t.max + 1} : t));
+                      } else {
+                        setModalTags([...modalTags, { name, max: 1 }]);
+                      }
+                      setTagInputValue("");
+                      setShowTagSuggestions(false);
+                    } else if (e.key === 'Backspace' && !tagInputValue && modalTags.length > 0) {
+                      setModalTags(modalTags.slice(0, -1));
+                    }
+                  }}
+                  onFocus={() => setShowTagSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
+                  placeholder={modalTags.length === 0 ? "输入标签后回车..." : ""}
+                  className="flex-1 min-w-[80px] outline-none text-sm bg-transparent"
+                />
+              </div>
+
+              {showTagSuggestions && (historicalTags.length > 0 || tagInputValue.trim()) && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                  <div className="p-2 flex flex-wrap gap-1.5">
+                    {historicalTags
+                      .filter(t => t.toLowerCase().includes(tagInputValue.toLowerCase()))
+                      .map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const existing = modalTags.find(t => t.name === tag);
+                          if (existing) {
+                            setModalTags(modalTags.map(t => t.name === tag ? {...t, max: t.max + 1} : t));
+                          } else {
+                            setModalTags([...modalTags, { name: tag, max: 1 }]);
+                          }
+                          setTagInputValue("");
+                          setShowTagSuggestions(false);
+                        }}
+                        className="px-2.5 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full border border-gray-200 transition-colors"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                    {tagInputValue.trim() && !historicalTags.includes(tagInputValue.trim()) && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const name = tagInputValue.trim();
+                          const existing = modalTags.find(t => t.name === name);
+                          if (existing) {
+                            setModalTags(modalTags.map(t => t.name === name ? {...t, max: t.max + 1} : t));
+                          } else {
+                            setModalTags([...modalTags, { name, max: 1 }]);
+                          }
+                          setTagInputValue("");
+                          setShowTagSuggestions(false);
+                        }}
+                        className="px-2.5 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full border border-blue-200 transition-colors"
+                      >
+                        添加 "{tagInputValue.trim()}"
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
