@@ -6,24 +6,9 @@ import UpcomingTaskItem from "./components/UpcomingTaskItem";
 import TaskModal from "./components/TaskModal";
 
 export default function TodayPage() {
-  const [groups, setGroups] = useLocalStorage("timetrackr_groups", ["健康", "学习", "游戏代肝"]);
-  const [tasks, setTasks] = useLocalStorage("timetrackr_tasks", [
-    {
-      id: 1,
-      name: "少年游",
-      group: "游戏代肝",
-      start: "2026-03-24",
-      end: "2026-04-24",
-      tags: [
-        { name: "协战", max: 1 },
-        { name: "勾协", max: 1 },
-        { name: "寄养", max: 1 }
-      ],
-      remark: "#359697 | 春区酪酪 | 邮箱",
-      logs: {},
-    },
-  ]);
-  const [historicalTags, setHistoricalTags] = useLocalStorage("timetrackr_historical_tags", ["协战", "勾协", "寄养"]);
+  const [groups, setGroups] = useLocalStorage("timetrackr_groups", []);
+  const [tasks, setTasks] = useLocalStorage("timetrackr_tasks", []);
+  const [historicalTags, setHistoricalTags] = useLocalStorage("timetrackr_historical_tags", []);
 
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
