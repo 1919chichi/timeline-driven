@@ -23,7 +23,9 @@ export default function TaskModal({
   const [tagInputValue, setTagInputValue] = useState("");
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [pendingDeleteTag, setPendingDeleteTag] = useState(null);
-  const [remarkInput, setRemarkInput] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [accountInfo, setAccountInfo] = useState("");
+  const [coopInfo, setCoopInfo] = useState("");
 
   const [noteInput, setNoteInput] = useState("");
 
@@ -49,7 +51,9 @@ export default function TaskModal({
         return { ...t };
       });
       setModalTags(parsedTags);
-      setRemarkInput(task.remark || "");
+      setAccountId(task.accountId || "");
+      setAccountInfo(task.accountInfo || "");
+      setCoopInfo(task.coopInfo || "");
       setNoteInput(task.note || "");
       setNewGroup(task.group || defaultGroup);
       setStartDate(task.start || getToday());
@@ -59,7 +63,9 @@ export default function TaskModal({
     } else {
       setNewName("");
       setModalTags([]);
-      setRemarkInput("");
+      setAccountId("");
+      setAccountInfo("");
+      setCoopInfo("");
       setNoteInput("");
       setNewGroup(defaultGroup);
       setStartDate(getToday());
@@ -116,7 +122,9 @@ export default function TaskModal({
       start: startDate,
       end: endDate,
       tags: finalTags,
-      remark: remarkInput,
+      accountId,
+      accountInfo,
+      coopInfo,
       note: noteInput,
       isNewGroup: shouldUseNewGroup && !groups.includes(finalGroup)
     });
@@ -154,9 +162,19 @@ export default function TaskModal({
             </div>
           </div>
 
-          <div>
-            <label className={sectionLabelClassName}>账号详情 (数字id/小号/账号)</label>
-            <div className={readOnlyValueClassName}>{remarkInput || "-"}</div>
+          <div className="grid grid-cols-1 gap-3">
+            <div>
+              <label className={sectionLabelClassName}>数字id</label>
+              <div className={readOnlyValueClassName}>{accountId || "-"}</div>
+            </div>
+            <div>
+              <label className={sectionLabelClassName}>账号信息</label>
+              <div className={readOnlyValueClassName}>{accountInfo || "-"}</div>
+            </div>
+            <div>
+              <label className={sectionLabelClassName}>协战小号信息</label>
+              <div className={readOnlyValueClassName}>{coopInfo || "-"}</div>
+            </div>
           </div>
 
           <div>
@@ -383,14 +401,34 @@ export default function TaskModal({
           )}
         </div>
 
-        <div>
-          <label className="text-xs font-medium text-gray-500 mb-1 block">账号详情 (数字id/小号/账号)</label>
-          <input
-            value={remarkInput}
-            onChange={(e) => setRemarkInput(e.target.value)}
-            placeholder="例如: #359697 | 春区酪酪 | 邮箱"
-            className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
-          />
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">数字id</label>
+            <input
+              value={accountId}
+              onChange={(e) => setAccountId(e.target.value)}
+              placeholder="例如: #359697"
+              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">账号信息</label>
+            <input
+              value={accountInfo}
+              onChange={(e) => setAccountInfo(e.target.value)}
+              placeholder="例如: 春区酪酪"
+              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-500 mb-1 block">协战小号信息</label>
+            <input
+              value={coopInfo}
+              onChange={(e) => setCoopInfo(e.target.value)}
+              placeholder="例如: 邮箱"
+              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+            />
+          </div>
         </div>
 
         <div>
