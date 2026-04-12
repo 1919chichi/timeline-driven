@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getToday } from '../utils/taskUtils';
 
 export default function TaskModal({ 
   task, 
@@ -8,17 +9,19 @@ export default function TaskModal({
   onClose, 
   onDelete 
 }) {
+  const defaultGroup = groups[0] || "";
   const [newName, setNewName] = useState("");
-  const [newGroup, setNewGroup] = useState(groups[0] || "游戏代肝");
+  const [newGroup, setNewGroup] = useState(defaultGroup);
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
+  const [formError, setFormError] = useState("");
   
   const [modalTags, setModalTags] = useState([]);
   const [tagInputValue, setTagInputValue] = useState("");
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [remarkInput, setRemarkInput] = useState("");
 
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(getToday());
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
@@ -30,30 +33,50 @@ export default function TaskModal({
       });
       setModalTags(parsedTags);
       setRemarkInput(task.remark || "");
-      setNewGroup(task.group || (groups[0] || "游戏代肝"));
-      setStartDate(task.start || new Date().toISOString().slice(0, 10));
+      setNewGroup(task.group || defaultGroup);
+      setStartDate(task.start || getToday());
       setEndDate(task.end || "");
-      setCreatingGroup(false);
-      setNewGroupName("");
+      setCreatingGroup(groups.length === 0);
+      setNewGroupName(groups.length === 0 ? (task.group || "") : "");
     } else {
       setNewName("");
       setModalTags([]);
       setRemarkInput("");
-      setNewGroup(groups[0] || "游戏代肝");
-      setStartDate(new Date().toISOString().slice(0, 10));
+      setNewGroup(defaultGroup);
+      setStartDate(getToday());
       setEndDate("");
-      setCreatingGroup(false);
+      setCreatingGroup(groups.length === 0);
       setNewGroupName("");
     }
-  }, [task, groups]);
+    setFormError("");
+  }, [task, groups, defaultGroup]);
+
+  const startCreatingGroup = () => {
+    setCreatingGroup(true);
+    setNewGroupName("");
+    setFormError("");
+  };
+
+  const stopCreatingGroup = () => {
+    setCreatingGroup(false);
+    setNewGroupName("");
+    setFormError("");
+  };
 
   const handleSave = () => {
-    if (!newName.trim()) return;
+    const trimmedName = newName.trim();
+    const trimmedGroupName = newGroupName.trim();
+    const shouldUseNewGroup = creatingGroup || groups.length === 0;
 
-    let finalGroup = newGroup;
+    if (!trimmedName) {
+      setFormError("请先填写任务名称");
+      return;
+    }
 
-    if (creatingGroup && newGroupName.trim()) {
-      finalGroup = newGroupName;
+    const finalGroup = shouldUseNewGroup ? trimmedGroupName : newGroup;
+    if (!finalGroup) {
+      setFormError("请先选择或输入分组");
+      return;
     }
 
     let finalTags = [...modalTags];
@@ -69,13 +92,13 @@ export default function TaskModal({
 
     onSave({
       id: task ? task.id : null,
-      name: newName,
+      name: trimmedName,
       group: finalGroup,
       start: startDate,
       end: endDate,
       tags: finalTags,
       remark: remarkInput,
-      isNewGroup: creatingGroup && newGroupName.trim() !== ""
+      isNewGroup: shouldUseNewGroup && !groups.includes(finalGroup)
     });
   };
 
@@ -102,7 +125,10 @@ export default function TaskModal({
           <label className="text-xs font-medium text-gray-500 mb-1 block">游戏ID / 任务名称</label>
           <input
             value={newName}
-            onChange={(e) => setNewName(e.target.value)}
+            onChange={(e) => {
+              setNewName(e.target.value);
+              if (formError) setFormError("");
+            }}
             placeholder="例如: 少年游"
             className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
           />
@@ -244,32 +270,51 @@ export default function TaskModal({
 
         <div>
           <label className="text-xs font-medium text-gray-500 mb-1 block">分组</label>
-          {!creatingGroup ? (
-            <select
-              value={newGroup}
-              onChange={(e) => {
-                if (e.target.value === "__new__") {
-                  setCreatingGroup(true);
-                } else {
+          {!creatingGroup && groups.length > 0 ? (
+            <div className="space-y-2">
+              <select
+                value={newGroup}
+                onChange={(e) => {
                   setNewGroup(e.target.value);
-                }
-              }}
-              className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
-            >
-              {groups.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-              <option value="__new__">+ 新建分组...</option>
-            </select>
+                  if (formError) setFormError("");
+                }}
+                className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
+              >
+                {groups.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={startCreatingGroup}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                + 新建分组
+              </button>
+            </div>
           ) : (
-            <input
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="输入新分组名"
-              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm bg-gray-50 rounded-t"
-            />
+            <div className="space-y-2">
+              <input
+                value={newGroupName}
+                onChange={(e) => {
+                  setNewGroupName(e.target.value);
+                  if (formError) setFormError("");
+                }}
+                placeholder="输入新分组名"
+                className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm bg-gray-50 rounded-t"
+              />
+              {groups.length > 0 && (
+                <button
+                  type="button"
+                  onClick={stopCreatingGroup}
+                  className="text-sm text-gray-500 hover:text-gray-700"
+                >
+                  改为选择已有分组
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -293,6 +338,10 @@ export default function TaskModal({
             />
           </div>
         </div>
+
+        {formError && (
+          <p className="text-sm text-red-500">{formError}</p>
+        )}
 
         <div className="pt-4 flex justify-end gap-2">
           <button
