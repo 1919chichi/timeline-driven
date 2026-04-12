@@ -36,21 +36,26 @@ export default function UpcomingTaskItem({ task, openViewModal, openEditModal })
       {/* Header section: Title, Reminder, Remark, and Edit button (Moved to Bottom) */}
       <div className="flex justify-between items-start w-full px-1">
         <div className="min-w-0 flex-1 pr-4">
-          <div className="flex items-center flex-wrap gap-2.5">
+          <div className="flex items-center gap-2.5">
             <h3 className="text-[16px] font-semibold tracking-tight text-gray-600 truncate">
               {task.name}
             </h3>
-            {infoTags.map((info, idx) => (
-              <span key={`info-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 text-gray-500 border border-gray-200/50 whitespace-nowrap">
-                {info}
-              </span>
-            ))}
             {showReminder && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-50 text-red-600 border border-red-100 whitespace-nowrap">
+              <span className="inline-flex shrink-0 items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-50 text-red-600 border border-red-100 whitespace-nowrap">
                 {daysUntilEnd === 0 ? "今天结束" : `仅剩 ${daysUntilEnd} 天`}
               </span>
             )}
           </div>
+
+          {infoTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {infoTags.map((info, idx) => (
+                <span key={`info-${idx}`} className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-medium bg-gray-100 text-gray-500 border border-gray-200/50 whitespace-nowrap">
+                  {info}
+                </span>
+              ))}
+            </div>
+          )}
           
           {task.remark && (
             <div className="text-[13px] text-gray-400 mt-2 line-clamp-2 leading-relaxed">
