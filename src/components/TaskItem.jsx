@@ -1,9 +1,11 @@
 import React from 'react';
-import { getToday, isDoneToday } from '../utils/taskUtils';
+import { getToday, isDoneToday, getDaysUntilEnd } from '../utils/taskUtils';
 
 export default function TaskItem({ task, toggleTask, toggleTag, openViewModal, openEditModal }) {
   const done = isDoneToday(task);
   const hasTags = task.tags && task.tags.length > 0;
+  const daysUntilEnd = getDaysUntilEnd(task.end);
+  const showReminder = !done && daysUntilEnd !== null && daysUntilEnd <= 3 && daysUntilEnd >= 0;
 
   return (
     <div
@@ -13,48 +15,48 @@ export default function TaskItem({ task, toggleTask, toggleTag, openViewModal, o
       }`}
     >
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <div className={`text-base font-medium ${done ? "line-through text-gray-500" : "text-gray-900"}`}>
-            {task.name}
-          </div>
-          {hasTags && (
-            <div className="flex gap-1 flex-wrap">
-              {task.tags.map((tagObj) => {
-                const tag = typeof tagObj === 'string' ? { name: tagObj, max: 1 } : tagObj;
-                const todayLog = task.logs[getToday()];
-                const count = todayLog === true ? tag.max : (todayLog ? (todayLog[tag.name] || 0) : 0);
-                const isMaxed = count >= tag.max;
-                
-                return (
-                  <button
-                    key={tag.name}
-                    onClick={(e) => toggleTag(task.id, tag.name, tag.max, e)}
-                    className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors flex items-center gap-1 ${
-                      isMaxed
-                        ? "bg-blue-500 text-white border-blue-500" 
-                        : "bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100"
-                    }`}
-                  >
-                    {tag.name}
-                    {tag.max > 1 && (
-                      <span className="opacity-80">
-                        {count}/{tag.max}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+        <div className={`text-base font-medium ${done ? "line-through text-gray-500" : "text-gray-900"}`}>
+          {task.name}
+          {showReminder && (
+            <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-600 border border-red-100 align-middle">
+              {daysUntilEnd === 0 ? "今天结束" : `仅剩 ${daysUntilEnd} 天`}
+            </span>
           )}
         </div>
         
         {task.remark && (
           <div className="text-xs text-gray-500 mt-1">{task.remark}</div>
         )}
-        
-        <div className="text-[11px] text-gray-400 mt-1.5 font-mono">
-          {task.start} 开始 {task.end ? `至 ${task.end}` : ""}
-        </div>
+
+        {hasTags && (
+          <div className="flex gap-1.5 flex-wrap mt-2.5">
+            {task.tags.map((tagObj) => {
+              const tag = typeof tagObj === 'string' ? { name: tagObj, max: 1 } : tagObj;
+              const todayLog = task.logs[getToday()];
+              const count = todayLog === true ? tag.max : (todayLog ? (todayLog[tag.name] || 0) : 0);
+              const isMaxed = count >= tag.max;
+              
+              return (
+                <button
+                  key={tag.name}
+                  onClick={(e) => toggleTag(task.id, tag.name, tag.max, e)}
+                  className={`text-[11px] px-2 py-0.5 rounded-md border transition-colors flex items-center gap-1.5 ${
+                    isMaxed
+                      ? "bg-blue-500 text-white border-blue-500" 
+                      : "bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100"
+                  }`}
+                >
+                  <span>{tag.name}</span>
+                  {tag.max > 1 && (
+                    <span className={`text-[10px] ${isMaxed ? "text-blue-100" : "text-blue-400"}`}>
+                      {count}/{tag.max}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
       
       <div className="flex items-center gap-3 pl-4">

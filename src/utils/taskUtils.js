@@ -41,3 +41,11 @@ export function isDoneToday(task) {
   
   return tags.every(tag => (log[tag.name] || 0) >= tag.max);
 }
+
+export function getDaysUntilEnd(end) {
+  if (!end) return null;
+  const todayObj = new Date(getToday());
+  const endObj = new Date(end);
+  const diffTime = endObj - todayObj;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}

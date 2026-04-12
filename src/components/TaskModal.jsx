@@ -395,12 +395,41 @@ export default function TaskModal({
             <input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setStartDate(val);
+                if (!task && val) {
+                  const [year, month, day] = val.split('-').map(Number);
+                  const d = new Date(year, month - 1, day);
+                  d.setDate(d.getDate() + 30);
+                  const yyyy = d.getFullYear();
+                  const mm = String(d.getMonth() + 1).padStart(2, '0');
+                  const dd = String(d.getDate()).padStart(2, '0');
+                  setEndDate(`${yyyy}-${mm}-${dd}`);
+                }
+              }}
               className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">结束日期 (选填)</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs font-medium text-gray-500 block">结束日期 (选填)</label>
+              <button 
+                type="button"
+                onClick={() => {
+                  const baseDate = endDate ? new Date(endDate) : new Date(startDate || Date.now());
+                  if (isNaN(baseDate.getTime())) return;
+                  baseDate.setDate(baseDate.getDate() + 30);
+                  const yyyy = baseDate.getFullYear();
+                  const mm = String(baseDate.getMonth() + 1).padStart(2, '0');
+                  const dd = String(baseDate.getDate()).padStart(2, '0');
+                  setEndDate(`${yyyy}-${mm}-${dd}`);
+                }}
+                className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded hover:bg-blue-100 transition-colors"
+              >
+                +30天
+              </button>
+            </div>
             <input
               type="date"
               value={endDate}
