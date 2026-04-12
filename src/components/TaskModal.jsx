@@ -4,19 +4,14 @@ import { getToday } from '../utils/taskUtils';
 export default function TaskModal({ 
   task, 
   mode = "create",
-  groups, 
   historicalTags, 
   onSave, 
   onClose, 
   onDelete,
   onDeleteTag
 }) {
-  const defaultGroup = groups[0] || "";
   const isViewMode = mode === "view";
   const [newName, setNewName] = useState("");
-  const [newGroup, setNewGroup] = useState(defaultGroup);
-  const [creatingGroup, setCreatingGroup] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
   const [formError, setFormError] = useState("");
   
   const [modalTags, setModalTags] = useState([]);
@@ -31,7 +26,6 @@ export default function TaskModal({
 
   const [startDate, setStartDate] = useState(getToday());
   const [endDate, setEndDate] = useState("");
-  const [activeTab, setActiveTab] = useState("basic");
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -57,11 +51,8 @@ export default function TaskModal({
       setAccountInfo(task.accountInfo || "");
       setCoopInfo(task.coopInfo || "");
       setNoteInput(task.note || "");
-      setNewGroup(task.group || defaultGroup);
       setStartDate(task.start || getToday());
       setEndDate(task.end || "");
-      setCreatingGroup(groups.length === 0);
-      setNewGroupName(groups.length === 0 ? (task.group || "") : "");
     } else {
       setNewName("");
       setModalTags([]);
@@ -69,40 +60,17 @@ export default function TaskModal({
       setAccountInfo("");
       setCoopInfo("");
       setNoteInput("");
-      setNewGroup(defaultGroup);
       setStartDate(getToday());
       setEndDate("");
-      setCreatingGroup(groups.length === 0);
-      setNewGroupName("");
     }
     setFormError("");
-  }, [task, groups, defaultGroup]);
-
-  const startCreatingGroup = () => {
-    setCreatingGroup(true);
-    setNewGroupName("");
-    setFormError("");
-  };
-
-  const stopCreatingGroup = () => {
-    setCreatingGroup(false);
-    setNewGroupName("");
-    setFormError("");
-  };
+  }, [task]);
 
   const handleSave = () => {
     const trimmedName = newName.trim();
-    const trimmedGroupName = newGroupName.trim();
-    const shouldUseNewGroup = creatingGroup || groups.length === 0;
 
     if (!trimmedName) {
       setFormError("请先填写任务名称");
-      return;
-    }
-
-    const finalGroup = shouldUseNewGroup ? trimmedGroupName : newGroup;
-    if (!finalGroup) {
-      setFormError("请先选择或输入分组");
       return;
     }
 
@@ -120,7 +88,6 @@ export default function TaskModal({
     onSave({
       id: task ? task.id : null,
       name: trimmedName,
-      group: finalGroup,
       start: startDate,
       end: endDate,
       tags: finalTags,
@@ -128,7 +95,6 @@ export default function TaskModal({
       accountInfo,
       coopInfo,
       note: noteInput,
-      isNewGroup: shouldUseNewGroup && !groups.includes(finalGroup)
     });
   };
 
@@ -185,11 +151,6 @@ export default function TaskModal({
             </div>
           </div>
 
-          <div>
-            <label className={sectionLabelClassName}>分组</label>
-            <div className={readOnlyValueClassName}>{newGroup || newGroupName || "-"}</div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={sectionLabelClassName}>开始日期</label>
@@ -217,7 +178,6 @@ export default function TaskModal({
       className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4"
       onMouseDown={() => {
         onClose();
-        setCreatingGroup(false);
       }}
     >
       <div 
@@ -437,56 +397,6 @@ export default function TaskModal({
           </div>
         </div>
 
-        <div>
-          <label className={sectionLabelClassName}>分组</label>
-          {!creatingGroup && groups.length > 0 ? (
-            <div className="space-y-3">
-              <select
-                value={newGroup}
-                onChange={(e) => {
-                  setNewGroup(e.target.value);
-                  if (formError) setFormError("");
-                }}
-                className={inputClassName}
-              >
-                {groups.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={startCreatingGroup}
-                className="text-[13px] font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
-              >
-                <span>+</span> 新建分组
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <input
-                value={newGroupName}
-                onChange={(e) => {
-                  setNewGroupName(e.target.value);
-                  if (formError) setFormError("");
-                }}
-                placeholder="输入新分组名"
-                className={inputClassName}
-              />
-              {groups.length > 0 && (
-                <button
-                  type="button"
-                  onClick={stopCreatingGroup}
-                  className="text-[13px] font-bold text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  改为选择已有分组
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className={sectionLabelClassName}>开始日期</label>
@@ -558,7 +468,6 @@ export default function TaskModal({
           <button
             onClick={() => {
               onClose();
-              setCreatingGroup(false);
             }}
             className="px-6 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-[16px] transition-all"
           >
