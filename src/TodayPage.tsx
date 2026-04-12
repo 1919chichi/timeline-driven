@@ -267,7 +267,7 @@ export default function TodayPage() {
           items={sortedOngoingTasks.map((t: Task) => t.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedOngoingTasks.map((task: Task) => (
               <SortableTaskItem 
                 key={task.id} 

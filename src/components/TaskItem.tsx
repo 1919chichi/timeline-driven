@@ -29,14 +29,14 @@ export default function TaskItem({
   return (
     <div
       onClick={(e) => openViewModal(task, e)}
-      className={`p-5 rounded-[22px] border cursor-pointer flex flex-col gap-4 transition-all duration-300 group/card ${
+      className={`h-[calc((100vh-240px)/3)] min-h-[220px] p-5 rounded-[22px] border cursor-pointer flex flex-col gap-4 transition-all duration-300 group/card ${
         done
           ? "opacity-60 border-green-200/60 bg-[#F0FDF4]/40"
           : "bg-white border-gray-200/60 shadow-[0_2px_12px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgb(0,0,0,0.06)] hover:border-gray-300/60 hover:-translate-y-0.5"
       }`}
     >
       {/* Main Body: Tags / Actions (Moved to Top) */}
-      <div className="flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
         {hasTags ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(task.tags || []).map((tagObj) => {
@@ -131,7 +131,7 @@ export default function TaskItem({
       </div>
 
       {/* Header section: Title, Reminder, Remark, and Edit button (Moved to Bottom) */}
-      <div className="flex justify-between items-start w-full px-1">
+      <div className="flex justify-between items-start w-full px-1 shrink-0">
         <div className="min-w-0 flex-1 pr-4">
           <div className="flex items-center gap-2.5">
             <h3

@@ -37,7 +37,7 @@ export default function SortableTaskItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="break-inside-avoid mb-4">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="h-full">
       <TaskItem
         task={task}
         toggleTask={toggleTask}

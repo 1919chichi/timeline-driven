@@ -429,7 +429,8 @@ export default function TaskModal({
               onChange={(e) => {
                 const val = e.target.value;
                 setStartDate(val);
-                if (!task && val) {
+                
+                if (val) {
                   const [year, month, day] = val.split('-').map(Number);
                   const d = new Date(year, month - 1, day);
                   d.setDate(d.getDate() + 30);

@@ -17,10 +17,10 @@ export default function UpcomingTaskItem({ task, openViewModal, openEditModal }:
   return (
     <div
       onClick={(e) => openViewModal(task, e)}
-      className="p-5 rounded-[22px] border border-gray-200/50 bg-white/50 backdrop-blur-sm flex flex-col gap-4 cursor-pointer transition-all duration-300 hover:bg-white hover:shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:border-gray-300/50 group/card"
+      className="h-[calc((100vh-240px)/3)] min-h-[220px] justify-between p-5 rounded-[22px] border border-gray-200/50 bg-white/50 backdrop-blur-sm flex flex-col gap-4 cursor-pointer transition-all duration-300 hover:bg-white hover:shadow-[0_4px_20px_rgb(0,0,0,0.04)] hover:border-gray-300/50 group/card"
     >
       {/* Main Body: Tags (Moved to Top) */}
-      <div className="" onClick={e => e.stopPropagation()}>
+      <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
         {hasTags && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(task.tags || []).map((tagObj) => {
@@ -41,7 +41,7 @@ export default function UpcomingTaskItem({ task, openViewModal, openEditModal }:
       </div>
 
       {/* Header section: Title, Reminder, Remark, and Edit button (Moved to Bottom) */}
-      <div className="flex justify-between items-start w-full px-1">
+      <div className="flex justify-between items-start w-full px-1 shrink-0">
         <div className="min-w-0 flex-1 pr-4">
           <div className="flex items-center gap-2.5">
             <h3 className="text-[16px] font-semibold tracking-tight text-gray-600 truncate">
