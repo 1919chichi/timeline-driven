@@ -349,8 +349,14 @@ export default function TodayPage() {
         const otherGroups = groups.filter(g => g !== deletingGroup);
         const taskCount = tasks.filter(t => t.group === deletingGroup).length;
         return (
-          <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-            <div className="bg-white p-7 rounded-3xl w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div 
+            className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4"
+            onMouseDown={() => setDeletingGroup(null)}
+          >
+            <div 
+              className="bg-white p-7 rounded-3xl w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
               <h2 className="text-xl font-bold">删除分组「{deletingGroup}」</h2>
               {taskCount > 0 && (
                 <p className="text-sm text-gray-500">该分组下有 {taskCount} 个任务，请选择处理方式：</p>

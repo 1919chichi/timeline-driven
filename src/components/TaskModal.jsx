@@ -134,8 +134,14 @@ export default function TaskModal({
 
   if (isViewMode) {
     return (
-      <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-        <div className="bg-white p-7 rounded-[28px] w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div 
+        className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4"
+        onMouseDown={onClose}
+      >
+        <div 
+          className="bg-white p-7 rounded-[28px] w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <div className="flex justify-between items-center mb-2">
             <h2 className="text-[22px] font-extrabold tracking-tight text-gray-900">任务详情</h2>
           </div>
@@ -207,8 +213,17 @@ export default function TaskModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-7 rounded-[28px] w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div 
+      className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4"
+      onMouseDown={() => {
+        onClose();
+        setCreatingGroup(false);
+      }}
+    >
+      <div 
+        className="bg-white p-7 rounded-[28px] w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-[22px] font-extrabold tracking-tight text-gray-900">{task ? "编辑任务" : "新建任务"}</h2>
           {task && (
