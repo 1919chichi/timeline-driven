@@ -1,5 +1,14 @@
 import React from "react";
 import { getToday, isDoneToday, getDaysUntilEnd } from "../utils/taskUtils";
+import { Task } from "../types";
+
+interface TaskItemProps {
+  task: Task;
+  toggleTask: (taskId: string | number, e: React.MouseEvent) => void;
+  toggleTag: (taskId: string | number, tagName: string, maxCount: number, e: React.MouseEvent) => void;
+  openViewModal: (task: Task, e: React.MouseEvent) => void;
+  openEditModal: (task: Task, e: React.MouseEvent) => void;
+}
 
 export default function TaskItem({
   task,
@@ -7,11 +16,11 @@ export default function TaskItem({
   toggleTag,
   openViewModal,
   openEditModal,
-}) {
+}: TaskItemProps) {
   const done = isDoneToday(task);
   const infoTags = [task.accountId, task.accountInfo, task.coopInfo].filter(
     Boolean,
-  );
+  ) as string[];
   const hasTags = task.tags && task.tags.length > 0;
   const daysUntilEnd = getDaysUntilEnd(task.end);
   const showReminder =
@@ -150,9 +159,9 @@ export default function TaskItem({
             </div>
           )}
 
-          {task.remark && (
+          {task.note && (
             <div className="text-[13px] text-gray-400 mt-2 line-clamp-2 leading-relaxed">
-              {task.remark}
+              {task.note}
             </div>
           )}
         </div>

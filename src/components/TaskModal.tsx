@@ -1,5 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { getToday } from '../utils/taskUtils';
+import { Task, Tag } from '../types';
+
+export interface TaskData {
+  id: string | number | null;
+  name: string;
+  start: string;
+  end: string;
+  tags: Tag[];
+  accountId: string;
+  accountInfo: string;
+  coopInfo: string;
+  note: string;
+}
+
+interface TaskModalProps {
+  task: Task | null;
+  mode?: "create" | "view" | "edit";
+  historicalTags: string[];
+  onSave: (taskData: TaskData) => void;
+  onClose: () => void;
+  onDelete: (id: string | number) => void;
+  onDeleteTag?: (tagName: string) => void;
+}
 
 export default function TaskModal({ 
   task, 
@@ -9,15 +32,15 @@ export default function TaskModal({
   onClose, 
   onDelete,
   onDeleteTag
-}) {
+}: TaskModalProps) {
   const isViewMode = mode === "view";
   const [newName, setNewName] = useState("");
   const [formError, setFormError] = useState("");
   
-  const [modalTags, setModalTags] = useState([]);
+  const [modalTags, setModalTags] = useState<Tag[]>([]);
   const [tagInputValue, setTagInputValue] = useState("");
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  const [pendingDeleteTag, setPendingDeleteTag] = useState(null);
+  const [pendingDeleteTag, setPendingDeleteTag] = useState<string | null>(null);
   const [accountId, setAccountId] = useState("");
   const [accountInfo, setAccountInfo] = useState("");
   const [coopInfo, setCoopInfo] = useState("");
@@ -28,7 +51,7 @@ export default function TaskModal({
   const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -42,7 +65,7 @@ export default function TaskModal({
   useEffect(() => {
     if (task) {
       setNewName(task.name);
-      const parsedTags = (task.tags || []).map(t => {
+      const parsedTags: Tag[] = (task.tags || []).map(t => {
         if (typeof t === 'string') return { name: t, max: 1 };
         return { ...t };
       });

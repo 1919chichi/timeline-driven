@@ -1,8 +1,10 @@
-export function getCurrentTimeZone() {
+import { Task, Tag } from "../types";
+
+export function getCurrentTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 }
 
-export function formatDateInTimeZone(date = new Date(), timeZone = getCurrentTimeZone()) {
+export function formatDateInTimeZone(date: Date = new Date(), timeZone: string = getCurrentTimeZone()): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
     year: "numeric",
@@ -17,22 +19,22 @@ export function formatDateInTimeZone(date = new Date(), timeZone = getCurrentTim
   return `${year}-${month}-${day}`;
 }
 
-export function getToday() {
+export function getToday(): string {
   return formatDateInTimeZone();
 }
 
-export function normalizeTags(tags) {
+export function normalizeTags(tags?: (Tag | string)[]): Tag[] {
   return (tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
 }
 
-export function getStatus(start, end) {
+export function getStatus(start?: string, end?: string): "upcoming" | "finished" | "ongoing" {
   const today = getToday();
   if (start && today < start) return "upcoming";
   if (end && today > end) return "finished";
   return "ongoing";
 }
 
-export function isDoneToday(task) {
+export function isDoneToday(task: Task): boolean {
   const today = getToday();
   const log = task.logs[today];
   if (!log) return false;
@@ -46,7 +48,7 @@ export function isDoneToday(task) {
   return tags.every(tag => (log[tag.name] || 0) >= tag.max);
 }
 
-export function hasAnyProgressToday(task) {
+export function hasAnyProgressToday(task: Task): boolean {
   const today = getToday();
   const log = task.logs[today];
   if (!log) return false;
@@ -57,11 +59,10 @@ export function hasAnyProgressToday(task) {
       return Object.keys(log).length > 0;
   }
   
-  // 对于多标签(多任务)的情况，必须每个标签都至少被点击过一次(>0)才算"已开始/完成一次"
   return tags.every(tag => (log[tag.name] || 0) > 0);
 }
 
-export function getCompletionRate(task) {
+export function getCompletionRate(task: Task): number {
   const today = getToday();
   const log = task.logs[today];
   if (!log) return 0;
@@ -82,10 +83,10 @@ export function getCompletionRate(task) {
   return totalMax === 0 ? 0 : totalProgress / totalMax;
 }
 
-export function getDaysUntilEnd(end) {
+export function getDaysUntilEnd(end?: string): number | null {
   if (!end) return null;
   const todayObj = new Date(getToday());
   const endObj = new Date(end);
-  const diffTime = endObj - todayObj;
+  const diffTime = endObj.getTime() - todayObj.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }

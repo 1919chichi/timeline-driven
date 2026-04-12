@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
-import { getToday, getStatus, isDoneToday, normalizeTags, hasAnyProgressToday, getCompletionRate, getDaysUntilEnd } from "./utils/taskUtils";
+import { useState, useCallback, useMemo, MouseEvent } from "react";
+import { getToday, getStatus, isDoneToday, normalizeTags, getDaysUntilEnd } from "./utils/taskUtils";
 import { useLocalStorage } from "./hooks/useLocalStorage";
-import TaskItem from "./components/TaskItem";
 import UpcomingTaskItem from "./components/UpcomingTaskItem";
-import TaskModal from "./components/TaskModal";
+import TaskModal, { TaskData } from "./components/TaskModal";
 import SortableTaskItem from "./components/SortableTaskItem";
+import { Task, Tag } from "./types";
 import {
   DndContext,
   closestCenter,
@@ -12,6 +12,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -22,21 +23,21 @@ import {
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 
 export default function TodayPage() {
-  const [tasks, setTasks] = useLocalStorage("timetrackr_tasks", []);
-  const [historicalTags, setHistoricalTags] = useLocalStorage("timetrackr_historical_tags", []);
+  const [tasks, setTasks] = useLocalStorage<Task[]>("timetrackr_tasks", []);
+  const [historicalTags, setHistoricalTags] = useLocalStorage<string[]>("timetrackr_historical_tags", []);
 
   const [nameFilter, setNameFilter] = useState("");
 
   const [showModal, setShowModal] = useState(false);
-  const [editingTask, setEditingTask] = useState(null);
-  const [modalMode, setModalMode] = useState("create");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
 
-  const toggleTask = useCallback((id, e) => {
+  const toggleTask = useCallback((id: string | number, e: MouseEvent) => {
     if (e) e.stopPropagation();
     const today = getToday();
 
-    setTasks((prev) =>
-      prev.map((t) => {
+    setTasks((prev: Task[]) =>
+      prev.map((t: Task) => {
         if (t.id !== id) return t;
 
         const newLogs = { ...t.logs };
@@ -47,8 +48,8 @@ export default function TodayPage() {
         } else {
           const tags = normalizeTags(t.tags);
           if (tags.length > 0) {
-            const todayLog = {};
-            tags.forEach(tag => {
+            const todayLog: Record<string, number> = {};
+            tags.forEach((tag: Tag) => {
                 todayLog[tag.name] = tag.max;
             });
             newLogs[today] = todayLog;
@@ -62,12 +63,12 @@ export default function TodayPage() {
     );
   }, [setTasks]);
 
-  const toggleTag = useCallback((id, tagName, maxCount, e) => {
+  const toggleTag = useCallback((id: string | number, tagName: string, maxCount: number, e: MouseEvent) => {
     if (e) e.stopPropagation();
     const today = getToday();
 
-    setTasks((prev) =>
-      prev.map((t) => {
+    setTasks((prev: Task[]) =>
+      prev.map((t: Task) => {
         if (t.id !== id) return t;
 
         const newLogs = { ...t.logs };
@@ -76,7 +77,7 @@ export default function TodayPage() {
         if (todayLog === true) {
             const tags = normalizeTags(t.tags);
             todayLog = {};
-            tags.forEach(tag => {
+            tags.forEach((tag: Tag) => {
                 todayLog[tag.name] = tag.max;
             });
         } else if (!todayLog) {
@@ -98,15 +99,15 @@ export default function TodayPage() {
     );
   }, [setTasks]);
 
-  const openModal = useCallback((task, mode, e) => {
+  const openModal = useCallback((task: Task | null, mode: "create" | "edit" | "view", e?: MouseEvent) => {
     if (e) e.stopPropagation();
     setEditingTask(task);
     setModalMode(mode);
     setShowModal(true);
   }, []);
 
-  const openEditModal = useCallback((task, e) => openModal(task, "edit", e), [openModal]);
-  const openViewModal = useCallback((task, e) => openModal(task, "view", e), [openModal]);
+  const openEditModal = useCallback((task: Task, e: MouseEvent) => openModal(task, "edit", e), [openModal]);
+  const openViewModal = useCallback((task: Task, e: MouseEvent) => openModal(task, "view", e), [openModal]);
 
   const openAddModal = useCallback(() => {
     setEditingTask(null);
@@ -116,23 +117,23 @@ export default function TodayPage() {
 
   const closeModal = useCallback(() => setShowModal(false), []);
 
-  const saveTask = useCallback((taskData) => {
+  const saveTask = useCallback((taskData: TaskData) => {
     const { id, name, start, end, tags, accountId, accountInfo, coopInfo, note } = taskData;
     
     const newHistory = new Set(historicalTags);
-    tags.forEach(t => newHistory.add(t.name));
+    tags.forEach((t: Tag) => newHistory.add(t.name));
     setHistoricalTags(Array.from(newHistory));
 
     if (id) {
-      setTasks((prev) => prev.map(t => {
+      setTasks((prev: Task[]) => prev.map((t: Task) => {
         if (t.id === id) {
           return { ...t, name, start, end, tags, accountId, accountInfo, coopInfo, note };
         }
         return t;
       }));
     } else {
-      const newTask = {
-        id: Date.now(),
+      const newTask: Task = {
+        id: Date.now().toString(),
         name,
         start,
         end,
@@ -143,35 +144,38 @@ export default function TodayPage() {
         note,
         logs: {},
       };
-      setTasks((prev) => [...prev, newTask]);
+      setTasks((prev: Task[]) => [...prev, newTask]);
     }
 
     setShowModal(false);
   }, [historicalTags, setHistoricalTags, setTasks]);
 
-  const deleteTask = useCallback((id) => {
-    setTasks(prev => prev.filter(t => t.id !== id));
+  const deleteTask = useCallback((id: string | number) => {
+    setTasks((prev: Task[]) => prev.filter((t: Task) => t.id !== id));
     setShowModal(false);
   }, [setTasks]);
 
-  const deleteTagGlobally = useCallback((tagName) => {
-    setTasks(prev => prev.map(t => ({
+  const deleteTagGlobally = useCallback((tagName: string) => {
+    setTasks((prev: Task[]) => prev.map((t: Task) => ({
       ...t,
-      tags: (t.tags || []).filter(tag => tag.name !== tagName),
+      tags: (t.tags || []).filter((tag: string | Tag) => {
+        if (typeof tag === 'string') return tag !== tagName;
+        return tag.name !== tagName;
+      }),
       logs: Object.fromEntries(
         Object.entries(t.logs || {}).map(([date, val]) => {
           if (val === true) return [date, val];
-          const { [tagName]: _, ...rest } = val;
+          const { [tagName]: _, ...rest } = val as Record<string, number>;
           return [date, rest];
         })
       )
     })));
-    setHistoricalTags(prev => prev.filter(t => t !== tagName));
+    setHistoricalTags((prev: string[]) => prev.filter((t: string) => t !== tagName));
   }, [setTasks, setHistoricalTags]);
 
   const ongoingTasks = useMemo(() => {
     const keyword = nameFilter.trim().toLowerCase();
-    return tasks.filter((t) => {
+    return tasks.filter((t: Task) => {
       if (getStatus(t.start, t.end) !== "ongoing") return false;
       if (keyword && !t.name.toLowerCase().includes(keyword)) return false;
       return true;
@@ -180,13 +184,13 @@ export default function TodayPage() {
 
   const upcomingTasks = useMemo(
     () => tasks
-      .filter((t) => {
+      .filter((t: Task) => {
         if (getStatus(t.start, t.end) !== "upcoming") return false;
         const keyword = nameFilter.trim().toLowerCase();
         if (keyword && !t.name.toLowerCase().includes(keyword)) return false;
         return true;
       })
-      .sort((a, b) => {
+      .sort((a: Task, b: Task) => {
         const aDays = getDaysUntilEnd(a.start);
         const bDays = getDaysUntilEnd(b.start);
         if (aDays === null && bDays === null) return 0;
@@ -213,12 +217,12 @@ export default function TodayPage() {
     })
   );
 
-  const handleDragEnd = useCallback((event) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (active && over && active.id !== over.id) {
-      setTasks((prev) => {
-        const oldIndex = prev.findIndex((t) => t.id === active.id);
-        const newIndex = prev.findIndex((t) => t.id === over.id);
+      setTasks((prev: Task[]) => {
+        const oldIndex = prev.findIndex((t: Task) => t.id === active.id);
+        const newIndex = prev.findIndex((t: Task) => t.id === over.id);
         return arrayMove(prev, oldIndex, newIndex);
       });
     }
@@ -260,11 +264,11 @@ export default function TodayPage() {
         modifiers={[restrictToWindowEdges]}
       >
         <SortableContext 
-          items={sortedOngoingTasks.map(t => t.id)}
+          items={sortedOngoingTasks.map((t: Task) => t.id)}
           strategy={rectSortingStrategy}
         >
           <div className="columns-1 md:columns-2 lg:columns-3 gap-4">
-            {sortedOngoingTasks.map((task) => (
+            {sortedOngoingTasks.map((task: Task) => (
               <SortableTaskItem 
                 key={task.id} 
                 task={task} 
@@ -284,7 +288,7 @@ export default function TodayPage() {
             <h1 className="text-[13px] font-bold tracking-widest text-gray-400 uppercase">即将开始</h1>
           </div>
           <div className="space-y-3">
-            {upcomingTasks.map((task) => (
+            {upcomingTasks.map((task: Task) => (
               <UpcomingTaskItem 
                 key={task.id} 
                 task={task} 

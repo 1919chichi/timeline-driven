@@ -2,6 +2,15 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import TaskItem from './TaskItem';
+import { Task } from '../types';
+
+interface SortableTaskItemProps {
+  task: Task;
+  toggleTask: (taskId: string | number, e: React.MouseEvent) => void;
+  toggleTag: (taskId: string | number, tagName: string, maxCount: number, e: React.MouseEvent) => void;
+  openViewModal: (task: Task, e: React.MouseEvent) => void;
+  openEditModal: (task: Task, e: React.MouseEvent) => void;
+}
 
 export default function SortableTaskItem({
   task,
@@ -9,7 +18,7 @@ export default function SortableTaskItem({
   toggleTag,
   openViewModal,
   openEditModal,
-}) {
+}: SortableTaskItemProps) {
   const {
     attributes,
     listeners,
@@ -19,7 +28,7 @@ export default function SortableTaskItem({
     isDragging,
   } = useSortable({ id: task.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
