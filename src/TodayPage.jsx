@@ -14,6 +14,10 @@ export default function TodayPage() {
   const [editingTask, setEditingTask] = useState(null);
   const [modalMode, setModalMode] = useState("create");
 
+  const [deletingGroup, setDeletingGroup] = useState(null);
+  const [deleteGroupAction, setDeleteGroupAction] = useState("move");
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState("");
+
   const toggleTask = useCallback((id, e) => {
     if (e) e.stopPropagation();
     const today = getToday();
@@ -139,6 +143,39 @@ export default function TodayPage() {
     setShowModal(false);
   }, [setTasks]);
 
+  const openDeleteGroupModal = useCallback((groupName) => {
+    const otherGroups = groups.filter(g => g !== groupName);
+    setDeleteGroupAction(otherGroups.length > 0 ? "move" : "delete");
+    setDeleteGroupTarget(otherGroups[0] || "");
+    setDeletingGroup(groupName);
+  }, [groups]);
+
+  const handleDeleteGroup = useCallback(() => {
+    if (!deletingGroup) return;
+    if (deleteGroupAction === "move" && deleteGroupTarget) {
+      setTasks(prev => prev.map(t => t.group === deletingGroup ? { ...t, group: deleteGroupTarget } : t));
+    } else {
+      setTasks(prev => prev.filter(t => t.group !== deletingGroup));
+    }
+    setGroups(prev => prev.filter(g => g !== deletingGroup));
+    setDeletingGroup(null);
+  }, [deletingGroup, deleteGroupAction, deleteGroupTarget, setTasks, setGroups]);
+
+  const deleteTagGlobally = useCallback((tagName) => {
+    setTasks(prev => prev.map(t => ({
+      ...t,
+      tags: (t.tags || []).filter(tag => tag.name !== tagName),
+      logs: Object.fromEntries(
+        Object.entries(t.logs || {}).map(([date, val]) => {
+          if (val === true) return [date, val];
+          const { [tagName]: _, ...rest } = val;
+          return [date, rest];
+        })
+      )
+    })));
+    setHistoricalTags(prev => prev.filter(t => t !== tagName));
+  }, [setTasks, setHistoricalTags]);
+
   const ongoingTasks = useMemo(
     () => tasks.filter((t) => getStatus(t.start, t.end) === "ongoing"),
     [tasks],
@@ -193,7 +230,18 @@ export default function TodayPage() {
 
         return (
           <div key={group} className="mb-6">
-            <h2 className="text-lg font-semibold mb-2">{group}</h2>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold">{group}</h2>
+              <button
+                onClick={() => openDeleteGroupModal(group)}
+                className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-full transition-colors"
+                title="删除分组"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
             <div className="space-y-3">
               {sortedGroupTasks.map((task) => (
                 <TaskItem 
@@ -242,8 +290,79 @@ export default function TodayPage() {
           onSave={saveTask}
           onClose={closeModal}
           onDelete={deleteTask}
+          onDeleteTag={deleteTagGlobally}
         />
       )}
+
+      {deletingGroup && (() => {
+        const otherGroups = groups.filter(g => g !== deletingGroup);
+        const taskCount = tasks.filter(t => t.group === deletingGroup).length;
+        return (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl space-y-4">
+              <h2 className="text-xl font-bold">删除分组「{deletingGroup}」</h2>
+              {taskCount > 0 && (
+                <p className="text-sm text-gray-500">该分组下有 {taskCount} 个任务，请选择处理方式：</p>
+              )}
+
+              {otherGroups.length > 0 && (
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="deleteGroupAction"
+                    value="move"
+                    checked={deleteGroupAction === "move"}
+                    onChange={() => setDeleteGroupAction("move")}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <span className="text-sm font-medium text-gray-800">移到其他分组</span>
+                    {deleteGroupAction === "move" && (
+                      <select
+                        value={deleteGroupTarget}
+                        onChange={(e) => setDeleteGroupTarget(e.target.value)}
+                        className="mt-1.5 w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
+                      >
+                        {otherGroups.map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                </label>
+              )}
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="deleteGroupAction"
+                  value="delete"
+                  checked={deleteGroupAction === "delete"}
+                  onChange={() => setDeleteGroupAction("delete")}
+                />
+                <span className="text-sm font-medium text-red-600">
+                  {taskCount > 0 ? `同时删除 ${taskCount} 个任务` : "删除分组"}
+                </span>
+              </label>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  onClick={() => setDeletingGroup(null)}
+                  className="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-xl"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleDeleteGroup}
+                  className="px-4 py-2 text-sm bg-red-500 text-white rounded-xl hover:bg-red-600"
+                >
+                  确认删除
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

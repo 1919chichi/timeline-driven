@@ -8,7 +8,8 @@ export default function TaskModal({
   historicalTags, 
   onSave, 
   onClose, 
-  onDelete 
+  onDelete,
+  onDeleteTag
 }) {
   const defaultGroup = groups[0] || "";
   const isViewMode = mode === "view";
@@ -21,6 +22,7 @@ export default function TaskModal({
   const [modalTags, setModalTags] = useState([]);
   const [tagInputValue, setTagInputValue] = useState("");
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
+  const [pendingDeleteTag, setPendingDeleteTag] = useState(null);
   const [remarkInput, setRemarkInput] = useState("");
 
   const [startDate, setStartDate] = useState(getToday());
@@ -287,23 +289,55 @@ export default function TaskModal({
                 {historicalTags
                   .filter(t => t.toLowerCase().includes(tagInputValue.toLowerCase()))
                   .map((tag) => (
-                  <button
-                    key={tag}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      const existing = modalTags.find(t => t.name === tag);
-                      if (existing) {
-                        setModalTags(modalTags.map(t => t.name === tag ? {...t, max: t.max + 1} : t));
-                      } else {
-                        setModalTags([...modalTags, { name: tag, max: 1 }]);
-                      }
-                      setTagInputValue("");
-                      setShowTagSuggestions(false);
-                    }}
-                    className="px-2.5 py-1 text-xs bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-full border border-gray-200 transition-colors"
-                  >
-                    {tag}
-                  </button>
+                  pendingDeleteTag === tag ? (
+                    <span key={tag} className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded-full border border-red-200">
+                      <span>删除「{tag}」?</span>
+                      <button
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          onDeleteTag && onDeleteTag(tag);
+                          setPendingDeleteTag(null);
+                        }}
+                        className="font-bold hover:text-red-800 transition-colors"
+                      >✓</button>
+                      <button
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setPendingDeleteTag(null);
+                        }}
+                        className="hover:text-red-800 transition-colors"
+                      >✕</button>
+                    </span>
+                  ) : (
+                    <span key={tag} className="flex items-center gap-0.5 px-2.5 py-1 text-xs bg-gray-50 text-gray-700 rounded-full border border-gray-200">
+                      <button
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          const existing = modalTags.find(t => t.name === tag);
+                          if (existing) {
+                            setModalTags(modalTags.map(t => t.name === tag ? {...t, max: t.max + 1} : t));
+                          } else {
+                            setModalTags([...modalTags, { name: tag, max: 1 }]);
+                          }
+                          setTagInputValue("");
+                          setShowTagSuggestions(false);
+                        }}
+                        className="hover:text-gray-900 transition-colors"
+                      >
+                        {tag}
+                      </button>
+                      {onDeleteTag && (
+                        <button
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setPendingDeleteTag(tag);
+                          }}
+                          className="ml-0.5 w-3.5 h-3.5 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-full transition-colors"
+                          title="全局删除此标签"
+                        >×</button>
+                      )}
+                    </span>
+                  )
                 ))}
                 {tagInputValue.trim() && !historicalTags.includes(tagInputValue.trim()) && (
                   <button
