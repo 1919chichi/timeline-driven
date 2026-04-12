@@ -42,6 +42,42 @@ export function isDoneToday(task) {
   return tags.every(tag => (log[tag.name] || 0) >= tag.max);
 }
 
+export function hasAnyProgressToday(task) {
+  const today = getToday();
+  const log = task.logs[today];
+  if (!log) return false;
+  if (log === true) return true;
+  
+  const tags = (task.tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
+  if (tags.length === 0) {
+      return Object.keys(log).length > 0;
+  }
+  
+  // 对于多标签(多任务)的情况，必须每个标签都至少被点击过一次(>0)才算"已开始/完成一次"
+  return tags.every(tag => (log[tag.name] || 0) > 0);
+}
+
+export function getCompletionRate(task) {
+  const today = getToday();
+  const log = task.logs[today];
+  if (!log) return 0;
+  if (log === true) return 1;
+  
+  const tags = (task.tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
+  if (tags.length === 0) {
+      return Object.keys(log).length > 0 ? 1 : 0;
+  }
+  
+  let totalMax = 0;
+  let totalProgress = 0;
+  tags.forEach(tag => {
+    totalMax += tag.max;
+    totalProgress += Math.min(log[tag.name] || 0, tag.max);
+  });
+  
+  return totalMax === 0 ? 0 : totalProgress / totalMax;
+}
+
 export function getDaysUntilEnd(end) {
   if (!end) return null;
   const todayObj = new Date(getToday());

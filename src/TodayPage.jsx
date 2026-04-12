@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getToday, getStatus, isDoneToday } from "./utils/taskUtils";
+import { getToday, getStatus, isDoneToday, hasAnyProgressToday, getCompletionRate, getDaysUntilEnd } from "./utils/taskUtils";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import TaskItem from "./components/TaskItem";
 import UpcomingTaskItem from "./components/UpcomingTaskItem";
@@ -146,7 +146,14 @@ export default function TodayPage() {
   );
   const upcomingTasks = tasks.filter(
     (t) => getStatus(t.start, t.end) === "upcoming",
-  );
+  ).sort((a, b) => {
+    const aDays = getDaysUntilEnd(a.start);
+    const bDays = getDaysUntilEnd(b.start);
+    if (aDays === null && bDays === null) return 0;
+    if (aDays === null) return 1;
+    if (bDays === null) return -1;
+    return aDays - bDays;
+  });
 
   return (
     <div className="p-6 max-w-md mx-auto relative min-h-screen pb-24">
@@ -156,11 +163,32 @@ export default function TodayPage() {
         const groupTasks = ongoingTasks.filter((t) => t.group === group);
         if (groupTasks.length === 0) return null;
 
+        const sortedGroupTasks = [...groupTasks].sort((a, b) => {
+          const aStarted = hasAnyProgressToday(a);
+          const bStarted = hasAnyProgressToday(b);
+          if (aStarted !== bStarted) {
+            return aStarted ? 1 : -1;
+          }
+          
+          const aRate = getCompletionRate(a);
+          const bRate = getCompletionRate(b);
+          if (aRate !== bRate) {
+            return aRate - bRate;
+          }
+          
+          const aDays = getDaysUntilEnd(a.end);
+          const bDays = getDaysUntilEnd(b.end);
+          if (aDays === null && bDays === null) return 0;
+          if (aDays === null) return 1;
+          if (bDays === null) return -1;
+          return aDays - bDays;
+        });
+
         return (
           <div key={group} className="mb-6">
             <h2 className="text-lg font-semibold mb-2">{group}</h2>
             <div className="space-y-3">
-              {groupTasks.map((task) => (
+              {sortedGroupTasks.map((task) => (
                 <TaskItem 
                   key={task.id} 
                   task={task} 
