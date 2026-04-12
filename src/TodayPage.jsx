@@ -115,7 +115,7 @@ export default function TodayPage() {
   const closeModal = useCallback(() => setShowModal(false), []);
 
   const saveTask = useCallback((taskData) => {
-    const { id, name, group, start, end, tags, remark, note, isNewGroup } = taskData;
+    const { id, name, group, start, end, tags, accountId, accountInfo, coopInfo, note, isNewGroup } = taskData;
     
     if (isNewGroup && !groups.includes(group)) {
       setGroups((prev) => [...prev, group]);
@@ -128,7 +128,7 @@ export default function TodayPage() {
     if (id) {
       setTasks((prev) => prev.map(t => {
         if (t.id === id) {
-          return { ...t, name, group, start, end, tags, remark, note };
+          return { ...t, name, group, start, end, tags, accountId, accountInfo, coopInfo, note };
         }
         return t;
       }));
@@ -140,7 +140,9 @@ export default function TodayPage() {
         start,
         end,
         tags,
-        remark,
+        accountId,
+        accountInfo,
+        coopInfo,
         note,
         logs: {},
       };
@@ -242,42 +244,44 @@ export default function TodayPage() {
   }, [groups, ongoingTasks]);
 
   return (
-    <div className="p-6 max-w-md mx-auto relative min-h-screen pb-24">
-      <h1 className="text-2xl font-bold mb-4">今天（进行中）</h1>
+    <div className="p-6 max-w-md mx-auto relative min-h-screen pb-24 font-sans selection:bg-gray-200">
+      <div className="sticky top-0 z-10 bg-[#F9FAFB]/80 backdrop-blur-xl -mx-6 px-6 pt-6 pb-5 mb-6">
+        <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-5">今天</h1>
 
-      <div className="relative mb-5">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-          <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
-        </svg>
-        <input
-          type="text"
-          placeholder="搜索任务名称…"
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-          className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:border-gray-400 focus:bg-white transition-colors"
-        />
-        {nameFilter && (
-          <button
-            onClick={() => setNameFilter("")}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
-            </svg>
-          </button>
-        )}
+        <div className="relative">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
+          </svg>
+          <input
+            type="text"
+            placeholder="搜索任务名称…"
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            className="w-full pl-11 pr-11 py-3 text-[15px] rounded-2xl border border-gray-200/80 bg-white shadow-sm focus:outline-none focus:ring-4 focus:ring-gray-100 focus:border-gray-300 transition-all placeholder:text-gray-400"
+          />
+          {nameFilter && (
+            <button
+              onClick={() => setNameFilter("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1.5 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
       {groups.map((group) => {
         const sortedGroupTasks = sortedOngoingByGroup[group];
         if (!sortedGroupTasks) return null;
 
         return (
-          <div key={group} className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold">{group}</h2>
+          <div key={group} className="mb-8">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h2 className="text-[13px] font-bold tracking-widest text-gray-400 uppercase">{group}</h2>
               <button
                 onClick={() => openDeleteGroupModal(group)}
-                className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-full transition-colors"
+                className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                 title="删除分组"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -303,7 +307,9 @@ export default function TodayPage() {
 
       {upcomingTasks.length > 0 && (
         <>
-          <h1 className="text-xl font-bold mt-8 mb-4 text-gray-700">即将开始</h1>
+          <div className="px-1 mt-10 mb-3">
+            <h1 className="text-[13px] font-bold tracking-widest text-gray-400 uppercase">即将开始</h1>
+          </div>
           <div className="space-y-3">
             {upcomingTasks.map((task) => (
               <UpcomingTaskItem 
@@ -319,9 +325,11 @@ export default function TodayPage() {
 
       <button
         onClick={openAddModal}
-        className="fixed bottom-8 right-8 w-14 h-14 bg-black text-white rounded-full shadow-lg text-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+        className="fixed bottom-8 right-6 w-14 h-14 bg-gray-900 text-white rounded-[20px] shadow-[0_8px_30px_rgb(0,0,0,0.16)] flex items-center justify-center hover:-translate-y-1 hover:shadow-[0_12px_40px_rgb(0,0,0,0.2)] hover:bg-black transition-all duration-300 z-40 active:scale-95"
       >
-        ＋
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+          <path fillRule="evenodd" d="M12 3.75a.75.75 0 01.75.75v6.75h6.75a.75.75 0 010 1.5h-6.75v6.75a.75.75 0 01-1.5 0v-6.75H4.5a.75.75 0 010-1.5h6.75V4.5a.75.75 0 01.75-.75z" clipRule="evenodd" />
+        </svg>
       </button>
 
       {showModal && (
@@ -341,8 +349,8 @@ export default function TodayPage() {
         const otherGroups = groups.filter(g => g !== deletingGroup);
         const taskCount = tasks.filter(t => t.group === deletingGroup).length;
         return (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl space-y-4">
+          <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-7 rounded-3xl w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
               <h2 className="text-xl font-bold">删除分组「{deletingGroup}」</h2>
               {taskCount > 0 && (
                 <p className="text-sm text-gray-500">该分组下有 {taskCount} 个任务，请选择处理方式：</p>

@@ -31,6 +31,7 @@ export default function TaskModal({
 
   const [startDate, setStartDate] = useState(getToday());
   const [endDate, setEndDate] = useState("");
+  const [activeTab, setActiveTab] = useState("basic");
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -40,8 +41,9 @@ export default function TaskModal({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  const sectionLabelClassName = "text-xs font-medium text-gray-500 mb-1 block";
-  const readOnlyValueClassName = "w-full min-h-[42px] p-2 text-sm bg-gray-50 rounded-xl text-gray-900";
+  const sectionLabelClassName = "text-[12px] font-bold text-gray-400 uppercase tracking-widest mb-2 block";
+  const readOnlyValueClassName = "w-full min-h-[48px] p-3.5 text-[15px] bg-gray-50 rounded-[16px] text-gray-900 border border-gray-100/50";
+  const inputClassName = "w-full border border-gray-200/80 bg-gray-50/50 rounded-[16px] p-3.5 text-[15px] text-gray-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-100 focus:border-gray-300 transition-all placeholder:text-gray-400";
 
   useEffect(() => {
     if (task) {
@@ -132,10 +134,10 @@ export default function TaskModal({
 
   if (isViewMode) {
     return (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl space-y-4">
+      <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div className="bg-white p-7 rounded-[28px] w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-bold">任务详情</h2>
+            <h2 className="text-[22px] font-extrabold tracking-tight text-gray-900">任务详情</h2>
           </div>
 
           <div>
@@ -145,15 +147,15 @@ export default function TaskModal({
 
           <div>
             <label className={sectionLabelClassName}>任务类型标签</label>
-            <div className={`${readOnlyValueClassName} flex flex-wrap gap-1.5`}>
+            <div className={`${readOnlyValueClassName} flex flex-wrap gap-2`}>
               {modalTags.length > 0 ? (
                 modalTags.map((tag) => (
                   <span
                     key={tag.name}
-                    className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs text-blue-700"
+                    className="inline-flex items-center rounded-[10px] bg-gray-200/60 px-3 py-1.5 text-[13px] font-medium text-gray-600"
                   >
                     {tag.name}
-                    {tag.max > 1 ? ` ${tag.max}` : ""}
+                    {tag.max > 1 ? <span className="ml-1.5 px-1.5 py-0.5 bg-white rounded-md text-[10px] font-bold text-gray-500 shadow-sm">x{tag.max}</span> : ""}
                   </span>
                 ))
               ) : (
@@ -162,7 +164,7 @@ export default function TaskModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className={sectionLabelClassName}>数字id</label>
               <div className={readOnlyValueClassName}>{accountId || "-"}</div>
@@ -182,7 +184,7 @@ export default function TaskModal({
             <div className={readOnlyValueClassName}>{newGroup || newGroupName || "-"}</div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={sectionLabelClassName}>开始日期</label>
               <div className={readOnlyValueClassName}>{startDate || "-"}</div>
@@ -199,25 +201,16 @@ export default function TaskModal({
               <div className={`${readOnlyValueClassName} whitespace-pre-wrap`}>{noteInput}</div>
             </div>
           )}
-
-          <div className="pt-4 flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm bg-black text-white rounded-xl hover:bg-gray-800"
-            >
-              关闭
-            </button>
-          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-3xl w-[90%] max-w-sm shadow-2xl space-y-4">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold">{task ? "编辑任务" : "新建任务"}</h2>
+    <div className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-white p-7 rounded-[28px] w-full max-w-sm shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-[22px] font-extrabold tracking-tight text-gray-900">{task ? "编辑任务" : "新建任务"}</h2>
           {task && (
             <button 
               onClick={() => {
@@ -225,7 +218,7 @@ export default function TaskModal({
                   onDelete(task.id);
                 }
               }}
-              className="text-red-500 text-sm font-medium hover:text-red-600 transition-colors"
+              className="text-red-500 text-[13px] font-bold px-3 py-1.5 rounded-xl hover:bg-red-50 transition-colors"
             >
               删除
             </button>
@@ -233,7 +226,7 @@ export default function TaskModal({
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500 mb-1 block">游戏ID / 任务名称</label>
+          <label className={sectionLabelClassName}>游戏ID / 任务名称</label>
           <input
             value={newName}
             onChange={(e) => {
@@ -241,25 +234,25 @@ export default function TaskModal({
               if (formError) setFormError("");
             }}
             placeholder="例如: 少年游"
-            className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+            className={inputClassName}
           />
         </div>
 
         <div className="relative">
-          <label className="text-xs font-medium text-gray-500 mb-1 block">任务类型标签</label>
+          <label className={sectionLabelClassName}>任务类型标签</label>
           <div 
-            className="w-full border-b border-gray-200 focus-within:border-black min-h-[38px] transition-colors bg-gray-50 rounded-t flex flex-wrap gap-1.5 p-2 relative"
+            className={`flex flex-wrap gap-2 ${inputClassName} py-2.5 min-h-[52px]`}
             onClick={() => {
               const input = document.getElementById('tag-input');
               if (input) input.focus();
             }}
           >
             {modalTags.map((tag, idx) => (
-              <div key={idx} className="flex items-center bg-blue-100/50 border border-blue-200 text-blue-700 rounded-full px-2 py-0.5 text-xs transition-all">
-                <span className="mr-1.5 font-medium">{tag.name}</span>
-                <div className="flex items-center bg-white rounded-full shadow-sm px-0.5">
+              <div key={idx} className="flex items-center bg-gray-900 text-white rounded-[12px] px-2.5 py-1 text-[13px] font-medium shadow-sm transition-all group">
+                <span className="mr-2">{tag.name}</span>
+                <div className="flex items-center bg-white/20 rounded-lg px-0.5 backdrop-blur-sm">
                   <button 
-                    className="w-4 h-4 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                    className="w-5 h-5 flex items-center justify-center hover:bg-white/30 rounded-lg text-white transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       const newTags = [...modalTags];
@@ -271,9 +264,9 @@ export default function TaskModal({
                       }
                     }}
                   >-</button>
-                  <span className="w-3 text-[10px] text-center font-medium">{tag.max}</span>
+                  <span className="w-4 text-[11px] text-center font-bold">{tag.max}</span>
                   <button 
-                    className="w-4 h-4 flex items-center justify-center hover:bg-gray-100 rounded-full text-gray-500 transition-colors"
+                    className="w-5 h-5 flex items-center justify-center hover:bg-white/30 rounded-lg text-white transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       const newTags = [...modalTags];
@@ -283,7 +276,7 @@ export default function TaskModal({
                   >+</button>
                 </div>
                 <button 
-                  className="ml-1.5 w-4 h-4 flex items-center justify-center text-blue-400 hover:text-blue-600 hover:bg-blue-200 rounded-full transition-colors"
+                  className="ml-2 w-5 h-5 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/20 rounded-full transition-colors"
                   onClick={(e) => {
                      e.stopPropagation();
                      setModalTags(modalTags.filter((_, i) => i !== idx));
@@ -317,18 +310,18 @@ export default function TaskModal({
               onFocus={() => setShowTagSuggestions(true)}
               onBlur={() => setTimeout(() => setShowTagSuggestions(false), 200)}
               placeholder={modalTags.length === 0 ? "输入标签后回车..." : ""}
-              className="flex-1 min-w-[80px] outline-none text-sm bg-transparent"
+              className="flex-1 min-w-[80px] outline-none text-[14px] bg-transparent text-gray-900 placeholder:text-gray-400 py-1"
             />
           </div>
 
           {showTagSuggestions && (historicalTags.length > 0 || tagInputValue.trim()) && (
-            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-lg max-h-40 overflow-y-auto">
-              <div className="p-2 flex flex-wrap gap-1.5">
+            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-100 rounded-[16px] shadow-[0_10px_40px_rgb(0,0,0,0.1)] max-h-48 overflow-y-auto p-2">
+              <div className="flex flex-wrap gap-2">
                 {historicalTags
                   .filter(t => t.toLowerCase().includes(tagInputValue.toLowerCase()))
                   .map((tag) => (
                   pendingDeleteTag === tag ? (
-                    <span key={tag} className="flex items-center gap-1 px-2 py-1 text-xs bg-red-50 text-red-600 rounded-full border border-red-200">
+                    <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-bold bg-red-50 text-red-600 rounded-[10px] border border-red-200">
                       <span>删除「{tag}」?</span>
                       <button
                         onMouseDown={(e) => {
@@ -336,41 +329,39 @@ export default function TaskModal({
                           onDeleteTag && onDeleteTag(tag);
                           setPendingDeleteTag(null);
                         }}
-                        className="font-bold hover:text-red-800 transition-colors"
+                        className="hover:text-red-800 bg-white px-2 py-0.5 rounded shadow-sm transition-colors"
                       >✓</button>
                       <button
                         onMouseDown={(e) => {
                           e.preventDefault();
                           setPendingDeleteTag(null);
                         }}
-                        className="hover:text-red-800 transition-colors"
+                        className="hover:text-red-800 bg-white px-2 py-0.5 rounded shadow-sm transition-colors"
                       >✕</button>
                     </span>
                   ) : (
-                    <span key={tag} className="flex items-center gap-0.5 px-2.5 py-1 text-xs bg-gray-50 text-gray-700 rounded-full border border-gray-200">
-                      <button
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          const existing = modalTags.find(t => t.name === tag);
-                          if (existing) {
-                            setModalTags(modalTags.map(t => t.name === tag ? {...t, max: t.max + 1} : t));
-                          } else {
-                            setModalTags([...modalTags, { name: tag, max: 1 }]);
-                          }
-                          setTagInputValue("");
-                          setShowTagSuggestions(false);
-                        }}
-                        className="hover:text-gray-900 transition-colors"
-                      >
-                        {tag}
-                      </button>
+                    <span key={tag} className="flex items-center gap-1 px-3 py-1.5 text-[13px] font-medium bg-gray-50 text-gray-700 rounded-[10px] border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        const existing = modalTags.find(t => t.name === tag);
+                        if (existing) {
+                          setModalTags(modalTags.map(t => t.name === tag ? {...t, max: t.max + 1} : t));
+                        } else {
+                          setModalTags([...modalTags, { name: tag, max: 1 }]);
+                        }
+                        setTagInputValue("");
+                        setShowTagSuggestions(false);
+                      }}
+                    >
+                      {tag}
                       {onDeleteTag && (
                         <button
                           onMouseDown={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             setPendingDeleteTag(tag);
                           }}
-                          className="ml-0.5 w-3.5 h-3.5 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-full transition-colors"
+                          className="ml-1.5 w-4 h-4 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                           title="全局删除此标签"
                         >×</button>
                       )}
@@ -391,9 +382,9 @@ export default function TaskModal({
                       setTagInputValue("");
                       setShowTagSuggestions(false);
                     }}
-                    className="px-2.5 py-1 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-full border border-blue-200 transition-colors"
+                    className="px-3 py-1.5 text-[13px] font-bold bg-gray-900 text-white rounded-[10px] hover:bg-black shadow-sm transition-colors"
                   >
-                    添加 "{tagInputValue.trim()}"
+                    + 添加 "{tagInputValue.trim()}"
                   </button>
                 )}
               </div>
@@ -401,47 +392,47 @@ export default function TaskModal({
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">数字id</label>
+            <label className={sectionLabelClassName}>数字id</label>
             <input
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               placeholder="例如: #359697"
-              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+              className={inputClassName}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">账号信息</label>
+            <label className={sectionLabelClassName}>账号信息</label>
             <input
               value={accountInfo}
               onChange={(e) => setAccountInfo(e.target.value)}
               placeholder="例如: 春区酪酪"
-              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+              className={inputClassName}
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">协战小号信息</label>
+            <label className={sectionLabelClassName}>协战小号信息</label>
             <input
               value={coopInfo}
               onChange={(e) => setCoopInfo(e.target.value)}
               placeholder="例如: 邮箱"
-              className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t"
+              className={inputClassName}
             />
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500 mb-1 block">分组</label>
+          <label className={sectionLabelClassName}>分组</label>
           {!creatingGroup && groups.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <select
                 value={newGroup}
                 onChange={(e) => {
                   setNewGroup(e.target.value);
                   if (formError) setFormError("");
                 }}
-                className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
+                className={inputClassName}
               >
                 {groups.map((g) => (
                   <option key={g} value={g}>
@@ -452,13 +443,13 @@ export default function TaskModal({
               <button
                 type="button"
                 onClick={startCreatingGroup}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-[13px] font-bold text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1"
               >
-                + 新建分组
+                <span>+</span> 新建分组
               </button>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <input
                 value={newGroupName}
                 onChange={(e) => {
@@ -466,13 +457,13 @@ export default function TaskModal({
                   if (formError) setFormError("");
                 }}
                 placeholder="输入新分组名"
-                className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm bg-gray-50 rounded-t"
+                className={inputClassName}
               />
               {groups.length > 0 && (
                 <button
                   type="button"
                   onClick={stopCreatingGroup}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-[13px] font-bold text-gray-500 hover:text-gray-900 transition-colors"
                 >
                   改为选择已有分组
                 </button>
@@ -481,9 +472,9 @@ export default function TaskModal({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-medium text-gray-500 mb-1 block">开始日期</label>
+            <label className={sectionLabelClassName}>开始日期</label>
             <input
               type="date"
               value={startDate}
@@ -500,12 +491,12 @@ export default function TaskModal({
                   setEndDate(`${yyyy}-${mm}-${dd}`);
                 }
               }}
-              className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
+              className={inputClassName}
             />
           </div>
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-medium text-gray-500 block">结束日期 (选填)</label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-[12px] font-bold text-gray-400 uppercase tracking-widest block">结束日期 (选填)</label>
               <button 
                 type="button"
                 onClick={() => {
@@ -517,7 +508,7 @@ export default function TaskModal({
                   const dd = String(baseDate.getDate()).padStart(2, '0');
                   setEndDate(`${yyyy}-${mm}-${dd}`);
                 }}
-                className="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded hover:bg-blue-100 transition-colors"
+                className="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md hover:bg-gray-200 hover:text-gray-900 transition-colors"
               >
                 +30天
               </button>
@@ -526,39 +517,41 @@ export default function TaskModal({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
+              className={inputClassName}
             />
           </div>
         </div>
 
         <div>
-          <label className="text-xs font-medium text-gray-500 mb-1 block">备注（选填）</label>
+          <label className={sectionLabelClassName}>备注（选填）</label>
           <textarea
             value={noteInput}
             onChange={(e) => setNoteInput(e.target.value)}
             placeholder="可填写任何备注信息…"
             rows={3}
-            className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t resize-none"
+            className={`${inputClassName} resize-none`}
           />
         </div>
 
         {formError && (
-          <p className="text-sm text-red-500">{formError}</p>
+          <div className="p-3 bg-red-50 rounded-xl border border-red-100">
+            <p className="text-[13px] font-medium text-red-600">{formError}</p>
+          </div>
         )}
 
-        <div className="pt-4 flex justify-end gap-2">
+        <div className="pt-4 flex justify-end gap-3">
           <button
             onClick={() => {
               onClose();
               setCreatingGroup(false);
             }}
-            className="px-4 py-2 text-sm text-gray-500 hover:bg-gray-100 rounded-xl"
+            className="px-6 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-[16px] transition-all"
           >
             取消
           </button>
           <button 
             onClick={handleSave} 
-            className="px-4 py-2 text-sm bg-black text-white rounded-xl hover:bg-gray-800"
+            className="px-6 py-3.5 text-[14px] font-bold bg-gray-900 text-white rounded-[16px] shadow-md hover:bg-black hover:-translate-y-0.5 hover:shadow-lg transition-all"
           >
             {task ? "保存修改" : "确定添加"}
           </button>
