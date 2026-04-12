@@ -4,6 +4,21 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import TaskItem from "./components/TaskItem";
 import UpcomingTaskItem from "./components/UpcomingTaskItem";
 import TaskModal from "./components/TaskModal";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import SortableGroup from "./components/SortableGroup";
 
 export default function TodayPage() {
   const [groups, setGroups] = useLocalStorage("timetrackr_groups", []);
@@ -243,6 +258,28 @@ export default function TodayPage() {
     return result;
   }, [groups, ongoingTasks]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = useCallback((event) => {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      setGroups((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, [setGroups]);
+
   return (
     <div className="p-6 max-w-md mx-auto relative min-h-screen pb-24 font-sans selection:bg-gray-200">
       <div className="sticky top-0 z-10 bg-[#F9FAFB]/80 backdrop-blur-xl -mx-6 px-6 pt-6 pb-5 mb-6">
@@ -271,39 +308,59 @@ export default function TodayPage() {
           )}
         </div>
       </div>
-      {groups.map((group) => {
-        const sortedGroupTasks = sortedOngoingByGroup[group];
-        if (!sortedGroupTasks) return null;
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={groups} strategy={verticalListSortingStrategy}>
+          {groups.map((group) => {
+            const sortedGroupTasks = sortedOngoingByGroup[group];
+            if (!sortedGroupTasks) return null;
 
-        return (
-          <div key={group} className="mb-8">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className="text-[13px] font-bold tracking-widest text-gray-400 uppercase">{group}</h2>
-              <button
-                onClick={() => openDeleteGroupModal(group)}
-                className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
-                title="删除分组"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-3">
-              {sortedGroupTasks.map((task) => (
-                <TaskItem 
-                  key={task.id} 
-                  task={task} 
-                  toggleTask={toggleTask} 
-                  toggleTag={toggleTag} 
-                  openViewModal={openViewModal}
-                  openEditModal={openEditModal} 
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+            return (
+              <SortableGroup key={group} id={group}>
+                {({ attributes, listeners, isDragging }) => (
+                  <>
+                    <div className="flex items-center justify-between mb-3 px-1 group/header">
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          {...attributes}
+                          {...listeners}
+                          className="cursor-grab text-gray-300 hover:text-gray-500 opacity-0 group-hover/header:opacity-100 transition-opacity flex items-center justify-center p-1 -ml-1 rounded hover:bg-gray-100"
+                          title="拖动排序"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                          </svg>
+                        </div>
+                        <h2 className="text-[13px] font-bold tracking-widest text-gray-400 uppercase">{group}</h2>
+                      </div>
+                      <button
+                        onClick={() => openDeleteGroupModal(group)}
+                        className="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                        title="删除分组"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                          <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className={`space-y-3 ${isDragging ? 'pointer-events-none' : ''}`}>
+                      {sortedGroupTasks.map((task) => (
+                        <TaskItem 
+                          key={task.id} 
+                          task={task} 
+                          toggleTask={toggleTask} 
+                          toggleTag={toggleTag} 
+                          openViewModal={openViewModal}
+                          openEditModal={openEditModal} 
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </SortableGroup>
+            );
+          })}
+        </SortableContext>
+      </DndContext>
 
       {upcomingTasks.length > 0 && (
         <>
