@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { getToday, getStatus, isDoneToday, hasAnyProgressToday, getCompletionRate, getDaysUntilEnd } from "./utils/taskUtils";
+import React, { useState, useCallback, useMemo } from "react";
+import { getToday, getStatus, isDoneToday, normalizeTags, hasAnyProgressToday, getCompletionRate, getDaysUntilEnd } from "./utils/taskUtils";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import TaskItem from "./components/TaskItem";
 import UpcomingTaskItem from "./components/UpcomingTaskItem";
@@ -14,7 +14,7 @@ export default function TodayPage() {
   const [editingTask, setEditingTask] = useState(null);
   const [modalMode, setModalMode] = useState("create");
 
-  const toggleTask = (id, e) => {
+  const toggleTask = useCallback((id, e) => {
     if (e) e.stopPropagation();
     const today = getToday();
 
@@ -28,7 +28,7 @@ export default function TodayPage() {
         if (done) {
           delete newLogs[today];
         } else {
-          const tags = (t.tags || []).map(tag => typeof tag === 'string' ? { name: tag, max: 1 } : tag);
+          const tags = normalizeTags(t.tags);
           if (tags.length > 0) {
             const todayLog = {};
             tags.forEach(tag => {
@@ -43,9 +43,9 @@ export default function TodayPage() {
         return { ...t, logs: newLogs };
       }),
     );
-  };
+  }, [setTasks]);
 
-  const toggleTag = (id, tagName, maxCount, e) => {
+  const toggleTag = useCallback((id, tagName, maxCount, e) => {
     if (e) e.stopPropagation();
     const today = getToday();
 
@@ -57,7 +57,7 @@ export default function TodayPage() {
         let todayLog = newLogs[today];
         
         if (todayLog === true) {
-            const tags = (t.tags || []).map(tag => typeof tag === 'string' ? { name: tag, max: 1 } : tag);
+            const tags = normalizeTags(t.tags);
             todayLog = {};
             tags.forEach(tag => {
                 todayLog[tag.name] = tag.max;
@@ -79,29 +79,27 @@ export default function TodayPage() {
         return { ...t, logs: newLogs };
       }),
     );
-  };
+  }, [setTasks]);
 
-  const openEditModal = (task, e) => {
+  const openModal = useCallback((task, mode, e) => {
     if (e) e.stopPropagation();
     setEditingTask(task);
-    setModalMode("edit");
+    setModalMode(mode);
     setShowModal(true);
-  };
+  }, []);
 
-  const openViewModal = (task, e) => {
-    if (e) e.stopPropagation();
-    setEditingTask(task);
-    setModalMode("view");
-    setShowModal(true);
-  };
+  const openEditModal = useCallback((task, e) => openModal(task, "edit", e), [openModal]);
+  const openViewModal = useCallback((task, e) => openModal(task, "view", e), [openModal]);
 
-  const openAddModal = () => {
+  const openAddModal = useCallback(() => {
     setEditingTask(null);
     setModalMode("create");
     setShowModal(true);
-  };
+  }, []);
 
-  const saveTask = (taskData) => {
+  const closeModal = useCallback(() => setShowModal(false), []);
+
+  const saveTask = useCallback((taskData) => {
     const { id, name, group, start, end, tags, remark, isNewGroup } = taskData;
     
     if (isNewGroup && !groups.includes(group)) {
@@ -134,55 +132,64 @@ export default function TodayPage() {
     }
 
     setShowModal(false);
-  };
+  }, [groups, historicalTags, setGroups, setHistoricalTags, setTasks]);
 
-  const deleteTask = (id) => {
+  const deleteTask = useCallback((id) => {
     setTasks(prev => prev.filter(t => t.id !== id));
     setShowModal(false);
-  };
+  }, [setTasks]);
 
-  const ongoingTasks = tasks.filter(
-    (t) => getStatus(t.start, t.end) === "ongoing",
+  const ongoingTasks = useMemo(
+    () => tasks.filter((t) => getStatus(t.start, t.end) === "ongoing"),
+    [tasks],
   );
-  const upcomingTasks = tasks.filter(
-    (t) => getStatus(t.start, t.end) === "upcoming",
-  ).sort((a, b) => {
-    const aDays = getDaysUntilEnd(a.start);
-    const bDays = getDaysUntilEnd(b.start);
-    if (aDays === null && bDays === null) return 0;
-    if (aDays === null) return 1;
-    if (bDays === null) return -1;
-    return aDays - bDays;
-  });
+
+  const upcomingTasks = useMemo(
+    () => tasks
+      .filter((t) => getStatus(t.start, t.end) === "upcoming")
+      .sort((a, b) => {
+        const aDays = getDaysUntilEnd(a.start);
+        const bDays = getDaysUntilEnd(b.start);
+        if (aDays === null && bDays === null) return 0;
+        if (aDays === null) return 1;
+        if (bDays === null) return -1;
+        return aDays - bDays;
+      }),
+    [tasks],
+  );
+
+  const sortedOngoingByGroup = useMemo(() => {
+    const result = {};
+    groups.forEach(group => {
+      const groupTasks = ongoingTasks.filter((t) => t.group === group);
+      if (groupTasks.length === 0) return;
+      result[group] = [...groupTasks].sort((a, b) => {
+        const aStarted = hasAnyProgressToday(a);
+        const bStarted = hasAnyProgressToday(b);
+        if (aStarted !== bStarted) return aStarted ? 1 : -1;
+
+        const aRate = getCompletionRate(a);
+        const bRate = getCompletionRate(b);
+        if (aRate !== bRate) return aRate - bRate;
+
+        const aDays = getDaysUntilEnd(a.end);
+        const bDays = getDaysUntilEnd(b.end);
+        if (aDays === null && bDays === null) return 0;
+        if (aDays === null) return 1;
+        if (bDays === null) return -1;
+        return aDays - bDays;
+      });
+    });
+    return result;
+  }, [groups, ongoingTasks]);
 
   return (
     <div className="p-6 max-w-md mx-auto relative min-h-screen pb-24">
       <h1 className="text-2xl font-bold mb-4">今天（进行中）</h1>
 
       {groups.map((group) => {
-        const groupTasks = ongoingTasks.filter((t) => t.group === group);
-        if (groupTasks.length === 0) return null;
-
-        const sortedGroupTasks = [...groupTasks].sort((a, b) => {
-          const aStarted = hasAnyProgressToday(a);
-          const bStarted = hasAnyProgressToday(b);
-          if (aStarted !== bStarted) {
-            return aStarted ? 1 : -1;
-          }
-          
-          const aRate = getCompletionRate(a);
-          const bRate = getCompletionRate(b);
-          if (aRate !== bRate) {
-            return aRate - bRate;
-          }
-          
-          const aDays = getDaysUntilEnd(a.end);
-          const bDays = getDaysUntilEnd(b.end);
-          if (aDays === null && bDays === null) return 0;
-          if (aDays === null) return 1;
-          if (bDays === null) return -1;
-          return aDays - bDays;
-        });
+        const sortedGroupTasks = sortedOngoingByGroup[group];
+        if (!sortedGroupTasks) return null;
 
         return (
           <div key={group} className="mb-6">
@@ -233,7 +240,7 @@ export default function TodayPage() {
           groups={groups}
           historicalTags={historicalTags}
           onSave={saveTask}
-          onClose={() => setShowModal(false)}
+          onClose={closeModal}
           onDelete={deleteTask}
         />
       )}

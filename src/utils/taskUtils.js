@@ -21,6 +21,10 @@ export function getToday() {
   return formatDateInTimeZone();
 }
 
+export function normalizeTags(tags) {
+  return (tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
+}
+
 export function getStatus(start, end) {
   const today = getToday();
   if (start && today < start) return "upcoming";
@@ -34,7 +38,7 @@ export function isDoneToday(task) {
   if (!log) return false;
   if (log === true) return true;
   
-  const tags = (task.tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
+  const tags = normalizeTags(task.tags);
   if (tags.length === 0) {
       return Object.keys(log).length > 0;
   }
@@ -48,7 +52,7 @@ export function hasAnyProgressToday(task) {
   if (!log) return false;
   if (log === true) return true;
   
-  const tags = (task.tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
+  const tags = normalizeTags(task.tags);
   if (tags.length === 0) {
       return Object.keys(log).length > 0;
   }
@@ -63,7 +67,7 @@ export function getCompletionRate(task) {
   if (!log) return 0;
   if (log === true) return 1;
   
-  const tags = (task.tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
+  const tags = normalizeTags(task.tags);
   if (tags.length === 0) {
       return Object.keys(log).length > 0 ? 1 : 0;
   }
