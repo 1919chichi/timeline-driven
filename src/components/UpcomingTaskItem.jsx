@@ -1,9 +1,12 @@
 import React from 'react';
 
-export default function UpcomingTaskItem({ task, openEditModal }) {
+export default function UpcomingTaskItem({ task, openViewModal, openEditModal }) {
   return (
-    <div className="p-4 rounded-2xl border border-gray-100 bg-gray-50 opacity-70 flex justify-between items-center">
-      <div>
+    <div
+      onClick={(e) => openViewModal(task, e)}
+      className="p-4 rounded-2xl border border-gray-100 bg-gray-50 opacity-70 flex justify-between items-center cursor-pointer"
+    >
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <div className="text-base font-medium text-gray-700">{task.name}</div>
           {task.tags && task.tags.length > 0 && (
@@ -25,7 +28,7 @@ export default function UpcomingTaskItem({ task, openEditModal }) {
       </div>
       
       <button 
-        onClick={() => openEditModal(task)}
+        onClick={(e) => openEditModal(task, e)}
         className="text-gray-400 hover:text-gray-600 text-xs font-medium transition-colors pl-4"
       >
         编辑

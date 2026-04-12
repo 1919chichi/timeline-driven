@@ -12,6 +12,7 @@ export default function TodayPage() {
 
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [modalMode, setModalMode] = useState("create");
 
   const toggleTask = (id, e) => {
     if (e) e.stopPropagation();
@@ -83,11 +84,20 @@ export default function TodayPage() {
   const openEditModal = (task, e) => {
     if (e) e.stopPropagation();
     setEditingTask(task);
+    setModalMode("edit");
+    setShowModal(true);
+  };
+
+  const openViewModal = (task, e) => {
+    if (e) e.stopPropagation();
+    setEditingTask(task);
+    setModalMode("view");
     setShowModal(true);
   };
 
   const openAddModal = () => {
     setEditingTask(null);
+    setModalMode("create");
     setShowModal(true);
   };
 
@@ -156,6 +166,7 @@ export default function TodayPage() {
                   task={task} 
                   toggleTask={toggleTask} 
                   toggleTag={toggleTag} 
+                  openViewModal={openViewModal}
                   openEditModal={openEditModal} 
                 />
               ))}
@@ -172,6 +183,7 @@ export default function TodayPage() {
               <UpcomingTaskItem 
                 key={task.id} 
                 task={task} 
+                openViewModal={openViewModal}
                 openEditModal={openEditModal} 
               />
             ))}
@@ -189,6 +201,7 @@ export default function TodayPage() {
       {showModal && (
         <TaskModal 
           task={editingTask}
+          mode={modalMode}
           groups={groups}
           historicalTags={historicalTags}
           onSave={saveTask}
