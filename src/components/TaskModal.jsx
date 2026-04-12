@@ -25,8 +25,18 @@ export default function TaskModal({
   const [pendingDeleteTag, setPendingDeleteTag] = useState(null);
   const [remarkInput, setRemarkInput] = useState("");
 
+  const [noteInput, setNoteInput] = useState("");
+
   const [startDate, setStartDate] = useState(getToday());
   const [endDate, setEndDate] = useState("");
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   const sectionLabelClassName = "text-xs font-medium text-gray-500 mb-1 block";
   const readOnlyValueClassName = "w-full min-h-[42px] p-2 text-sm bg-gray-50 rounded-xl text-gray-900";
@@ -40,6 +50,7 @@ export default function TaskModal({
       });
       setModalTags(parsedTags);
       setRemarkInput(task.remark || "");
+      setNoteInput(task.note || "");
       setNewGroup(task.group || defaultGroup);
       setStartDate(task.start || getToday());
       setEndDate(task.end || "");
@@ -49,6 +60,7 @@ export default function TaskModal({
       setNewName("");
       setModalTags([]);
       setRemarkInput("");
+      setNoteInput("");
       setNewGroup(defaultGroup);
       setStartDate(getToday());
       setEndDate("");
@@ -105,6 +117,7 @@ export default function TaskModal({
       end: endDate,
       tags: finalTags,
       remark: remarkInput,
+      note: noteInput,
       isNewGroup: shouldUseNewGroup && !groups.includes(finalGroup)
     });
   };
@@ -161,6 +174,13 @@ export default function TaskModal({
               <div className={readOnlyValueClassName}>{endDate || "-"}</div>
             </div>
           </div>
+
+          {noteInput && (
+            <div>
+              <label className={sectionLabelClassName}>备注</label>
+              <div className={`${readOnlyValueClassName} whitespace-pre-wrap`}>{noteInput}</div>
+            </div>
+          )}
 
           <div className="pt-4 flex justify-end">
             <button
@@ -471,6 +491,17 @@ export default function TaskModal({
               className="w-full border border-gray-200 rounded-lg p-2 text-sm bg-white"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">备注（选填）</label>
+          <textarea
+            value={noteInput}
+            onChange={(e) => setNoteInput(e.target.value)}
+            placeholder="可填写任何备注信息…"
+            rows={3}
+            className="w-full border-b border-gray-200 focus:border-black outline-none p-2 text-sm transition-colors bg-gray-50 rounded-t resize-none"
+          />
         </div>
 
         {formError && (

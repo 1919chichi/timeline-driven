@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { getToday, getStatus, isDoneToday, normalizeTags, hasAnyProgressToday, getCompletionRate, getDaysUntilEnd } from "./utils/taskUtils";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import TaskItem from "./components/TaskItem";
@@ -10,6 +10,8 @@ export default function TodayPage() {
   const [tasks, setTasks] = useLocalStorage("timetrackr_tasks", []);
   const [historicalTags, setHistoricalTags] = useLocalStorage("timetrackr_historical_tags", []);
 
+  const [nameFilter, setNameFilter] = useState("");
+
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [modalMode, setModalMode] = useState("create");
@@ -17,6 +19,15 @@ export default function TodayPage() {
   const [deletingGroup, setDeletingGroup] = useState(null);
   const [deleteGroupAction, setDeleteGroupAction] = useState("move");
   const [deleteGroupTarget, setDeleteGroupTarget] = useState("");
+
+  useEffect(() => {
+    if (!deletingGroup) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setDeletingGroup(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [deletingGroup]);
 
   const toggleTask = useCallback((id, e) => {
     if (e) e.stopPropagation();
@@ -104,7 +115,7 @@ export default function TodayPage() {
   const closeModal = useCallback(() => setShowModal(false), []);
 
   const saveTask = useCallback((taskData) => {
-    const { id, name, group, start, end, tags, remark, isNewGroup } = taskData;
+    const { id, name, group, start, end, tags, remark, note, isNewGroup } = taskData;
     
     if (isNewGroup && !groups.includes(group)) {
       setGroups((prev) => [...prev, group]);
@@ -117,7 +128,7 @@ export default function TodayPage() {
     if (id) {
       setTasks((prev) => prev.map(t => {
         if (t.id === id) {
-          return { ...t, name, group, start, end, tags, remark };
+          return { ...t, name, group, start, end, tags, remark, note };
         }
         return t;
       }));
@@ -130,6 +141,7 @@ export default function TodayPage() {
         end,
         tags,
         remark,
+        note,
         logs: {},
       };
       setTasks((prev) => [...prev, newTask]);
@@ -176,14 +188,23 @@ export default function TodayPage() {
     setHistoricalTags(prev => prev.filter(t => t !== tagName));
   }, [setTasks, setHistoricalTags]);
 
-  const ongoingTasks = useMemo(
-    () => tasks.filter((t) => getStatus(t.start, t.end) === "ongoing"),
-    [tasks],
-  );
+  const ongoingTasks = useMemo(() => {
+    const keyword = nameFilter.trim().toLowerCase();
+    return tasks.filter((t) => {
+      if (getStatus(t.start, t.end) !== "ongoing") return false;
+      if (keyword && !t.name.toLowerCase().includes(keyword)) return false;
+      return true;
+    });
+  }, [tasks, nameFilter]);
 
   const upcomingTasks = useMemo(
     () => tasks
-      .filter((t) => getStatus(t.start, t.end) === "upcoming")
+      .filter((t) => {
+        if (getStatus(t.start, t.end) !== "upcoming") return false;
+        const keyword = nameFilter.trim().toLowerCase();
+        if (keyword && !t.name.toLowerCase().includes(keyword)) return false;
+        return true;
+      })
       .sort((a, b) => {
         const aDays = getDaysUntilEnd(a.start);
         const bDays = getDaysUntilEnd(b.start);
@@ -192,7 +213,7 @@ export default function TodayPage() {
         if (bDays === null) return -1;
         return aDays - bDays;
       }),
-    [tasks],
+    [tasks, nameFilter],
   );
 
   const sortedOngoingByGroup = useMemo(() => {
@@ -224,6 +245,28 @@ export default function TodayPage() {
     <div className="p-6 max-w-md mx-auto relative min-h-screen pb-24">
       <h1 className="text-2xl font-bold mb-4">今天（进行中）</h1>
 
+      <div className="relative mb-5">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+          <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clipRule="evenodd" />
+        </svg>
+        <input
+          type="text"
+          placeholder="搜索任务名称…"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          className="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:border-gray-400 focus:bg-white transition-colors"
+        />
+        {nameFilter && (
+          <button
+            onClick={() => setNameFilter("")}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        )}
+      </div>
       {groups.map((group) => {
         const sortedGroupTasks = sortedOngoingByGroup[group];
         if (!sortedGroupTasks) return null;
