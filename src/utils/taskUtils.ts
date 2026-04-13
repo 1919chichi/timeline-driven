@@ -20,7 +20,9 @@ export function formatDateInTimeZone(date: Date = new Date(), timeZone: string =
 }
 
 export function getToday(): string {
-  return formatDateInTimeZone();
+  const now = new Date();
+  now.setHours(now.getHours() - 2);
+  return formatDateInTimeZone(now);
 }
 
 export function normalizeTags(tags?: (Tag | string)[]): Tag[] {

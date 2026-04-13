@@ -10,6 +10,7 @@ export interface Task {
   end?: string;
   tags?: (Tag | string)[];
   logs: Record<string, any>;
+  groupId?: string;
   color?: string;
   accountId?: string;
   accountInfo?: string;

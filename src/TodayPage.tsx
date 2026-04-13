@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, MouseEvent } from "react";
+import React, { useState, useCallback, useMemo, MouseEvent } from "react";
 import { getToday, getStatus, isDoneToday, normalizeTags, getDaysUntilEnd } from "./utils/taskUtils";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import UpcomingTaskItem from "./components/UpcomingTaskItem";
@@ -25,6 +25,7 @@ import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 export default function TodayPage() {
   const [tasks, setTasks] = useLocalStorage<Task[]>("timetrackr_tasks", []);
   const [historicalTags, setHistoricalTags] = useLocalStorage<string[]>("timetrackr_historical_tags", []);
+  const [historicalGroups, setHistoricalGroups] = useLocalStorage<string[]>("timetrackr_historical_groups", []);
 
   const [nameFilter, setNameFilter] = useState("");
 
@@ -118,16 +119,22 @@ export default function TodayPage() {
   const closeModal = useCallback(() => setShowModal(false), []);
 
   const saveTask = useCallback((taskData: TaskData) => {
-    const { id, name, start, end, tags, accountId, accountInfo, coopInfo, note } = taskData;
+    const { id, name, start, end, tags, accountId, accountInfo, coopInfo, note, groupId } = taskData;
     
     const newHistory = new Set(historicalTags);
     tags.forEach((t: Tag) => newHistory.add(t.name));
     setHistoricalTags(Array.from(newHistory));
 
+    if (groupId) {
+      const newGroups = new Set(historicalGroups);
+      newGroups.add(groupId);
+      setHistoricalGroups(Array.from(newGroups));
+    }
+
     if (id) {
       setTasks((prev: Task[]) => prev.map((t: Task) => {
         if (t.id === id) {
-          return { ...t, name, start, end, tags, accountId, accountInfo, coopInfo, note };
+          return { ...t, name, start, end, tags, accountId, accountInfo, coopInfo, note, groupId };
         }
         return t;
       }));
@@ -142,13 +149,14 @@ export default function TodayPage() {
         accountInfo,
         coopInfo,
         note,
+        groupId,
         logs: {},
       };
       setTasks((prev: Task[]) => [...prev, newTask]);
     }
 
     setShowModal(false);
-  }, [historicalTags, setHistoricalTags, setTasks]);
+  }, [historicalTags, setHistoricalTags, historicalGroups, setHistoricalGroups, setTasks]);
 
   const deleteTask = useCallback((id: string | number) => {
     setTasks((prev: Task[]) => prev.filter((t: Task) => t.id !== id));
@@ -201,10 +209,35 @@ export default function TodayPage() {
     [tasks, nameFilter],
   );
 
+  const allGroups = useMemo(() => {
+    const groups = new Set(historicalGroups);
+    ongoingTasks.forEach((t: Task) => {
+      if (t.groupId) groups.add(t.groupId as string);
+    });
+    return Array.from(groups).sort();
+  }, [historicalGroups, ongoingTasks]);
+
   const sortedOngoingTasks = useMemo(() => {
-    // Preserve manual sorting order from tasks array
-    return ongoingTasks;
-  }, [ongoingTasks]);
+    const ungrouped = ongoingTasks.filter((t: Task) => !t.groupId);
+    
+    const groupMap: Record<string, Task[]> = {};
+    allGroups.forEach(g => {
+      groupMap[g] = [];
+    });
+    
+    ongoingTasks.filter((t: Task) => t.groupId).forEach((t: Task) => {
+      const g = t.groupId as string;
+      if (groupMap[g]) groupMap[g].push(t);
+    });
+    
+    let result: Task[] = [];
+    allGroups.forEach(g => {
+      result.push(...groupMap[g]);
+    });
+    result.push(...ungrouped);
+    
+    return result;
+  }, [ongoingTasks, allGroups]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -223,7 +256,19 @@ export default function TodayPage() {
       setTasks((prev: Task[]) => {
         const oldIndex = prev.findIndex((t: Task) => t.id === active.id);
         const newIndex = prev.findIndex((t: Task) => t.id === over.id);
-        return arrayMove(prev, oldIndex, newIndex);
+        
+        if (oldIndex === -1 || newIndex === -1) return prev;
+        
+        let newTasks = [...prev];
+        const activeTask = { ...newTasks[oldIndex] };
+        const overTask = newTasks[newIndex];
+        
+        if (activeTask.groupId !== overTask.groupId) {
+          activeTask.groupId = overTask.groupId;
+        }
+        
+        newTasks[oldIndex] = activeTask;
+        return arrayMove(newTasks, oldIndex, newIndex);
       });
     }
   }, [setTasks]);
@@ -268,16 +313,72 @@ export default function TodayPage() {
           strategy={rectSortingStrategy}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedOngoingTasks.map((task: Task) => (
-              <SortableTaskItem 
-                key={task.id} 
-                task={task} 
-                toggleTask={toggleTask} 
-                toggleTag={toggleTag} 
-                openViewModal={openViewModal}
-                openEditModal={openEditModal} 
-              />
-            ))}
+            {allGroups.map(g => {
+              const tasksInGroup = sortedOngoingTasks.filter(t => t.groupId === g);
+              return (
+                <React.Fragment key={`group-${g}`}>
+                  <div className="col-span-full pt-4 pb-2 border-b border-gray-100 mb-2 flex items-center group">
+                    <h2 className="text-[15px] font-bold text-gray-900 tracking-wide">{g}</h2>
+                    <span className="ml-3 text-[12px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
+                      {tasksInGroup.length} 任务
+                    </span>
+                    {tasksInGroup.length === 0 && (
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`确定删除空分组 "${g}" 吗？`)) {
+                            setHistoricalGroups(prev => prev.filter(x => x !== g));
+                          }
+                        }}
+                        className="ml-auto text-[12px] font-medium text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500 bg-red-50 px-2 py-1 rounded-lg"
+                      >
+                        删除空分组
+                      </button>
+                    )}
+                  </div>
+                  {tasksInGroup.map(task => (
+                    <SortableTaskItem 
+                      key={task.id} 
+                      task={task} 
+                      toggleTask={toggleTask} 
+                      toggleTag={toggleTag} 
+                      openViewModal={openViewModal}
+                      openEditModal={openEditModal} 
+                    />
+                  ))}
+                  {tasksInGroup.length === 0 && (
+                    <div className="col-span-full h-20 rounded-[20px] border-2 border-dashed border-gray-200 bg-gray-50/50 flex items-center justify-center text-[13px] text-gray-400 font-medium">
+                      此分组暂无任务
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
+
+            {(() => {
+              const ungroupedTasks = sortedOngoingTasks.filter(t => !t.groupId);
+              if (ungroupedTasks.length === 0 && allGroups.length === 0) return null;
+              
+              return (
+                <React.Fragment key="group-ungrouped">
+                  <div className="col-span-full pt-4 pb-2 border-b border-gray-100 mb-2 flex items-center">
+                    <h2 className="text-[15px] font-bold text-gray-900 tracking-wide">未分组</h2>
+                    <span className="ml-3 text-[12px] font-medium text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md">
+                      {ungroupedTasks.length} 任务
+                    </span>
+                  </div>
+                  {ungroupedTasks.map(task => (
+                    <SortableTaskItem 
+                      key={task.id} 
+                      task={task} 
+                      toggleTask={toggleTask} 
+                      toggleTag={toggleTag} 
+                      openViewModal={openViewModal}
+                      openEditModal={openEditModal} 
+                    />
+                  ))}
+                </React.Fragment>
+              );
+            })()}
           </div>
         </SortableContext>
       </DndContext>

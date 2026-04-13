@@ -12,6 +12,7 @@ export interface TaskData {
   accountInfo: string;
   coopInfo: string;
   note: string;
+  groupId?: string;
 }
 
 interface TaskModalProps {
@@ -46,6 +47,7 @@ export default function TaskModal({
   const [coopInfo, setCoopInfo] = useState("");
 
   const [noteInput, setNoteInput] = useState("");
+  const [groupId, setGroupId] = useState("");
 
   const [startDate, setStartDate] = useState(getToday());
   const [endDate, setEndDate] = useState("");
@@ -74,6 +76,7 @@ export default function TaskModal({
       setAccountInfo(task.accountInfo || "");
       setCoopInfo(task.coopInfo || "");
       setNoteInput(task.note || "");
+      setGroupId(task.groupId || "");
       setStartDate(task.start || getToday());
       setEndDate(task.end || "");
     } else {
@@ -83,6 +86,7 @@ export default function TaskModal({
       setAccountInfo("");
       setCoopInfo("");
       setNoteInput("");
+      setGroupId("");
       setStartDate(getToday());
       setEndDate("");
     }
@@ -118,6 +122,7 @@ export default function TaskModal({
       accountInfo,
       coopInfo,
       note: noteInput,
+      groupId: groupId.trim() || undefined,
     });
   };
 
@@ -184,6 +189,13 @@ export default function TaskModal({
               <div className={readOnlyValueClassName}>{endDate || "-"}</div>
             </div>
           </div>
+
+          {groupId && (
+            <div>
+              <label className={sectionLabelClassName}>分组名称</label>
+              <div className={readOnlyValueClassName}>{groupId}</div>
+            </div>
+          )}
 
           {noteInput && (
             <div>
@@ -469,6 +481,16 @@ export default function TaskModal({
               className={inputClassName}
             />
           </div>
+        </div>
+
+        <div>
+          <label className={sectionLabelClassName}>分组名称（选填）</label>
+          <input
+            value={groupId}
+            onChange={(e) => setGroupId(e.target.value)}
+            placeholder="例如:工作,学习..."
+            className={inputClassName}
+          />
         </div>
 
         <div>
