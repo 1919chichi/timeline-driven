@@ -29,6 +29,15 @@ export function normalizeTags(tags?: (Tag | string)[]): Tag[] {
   return (tags || []).map(t => typeof t === 'string' ? { name: t, max: 1 } : t);
 }
 
+/** 关键词为空时视为匹配；否则在任务名称、备注或任一任务标签名称中子串匹配（不区分大小写）。 */
+export function taskMatchesSearch(task: Task, rawKeyword: string): boolean {
+  const keyword = rawKeyword.trim().toLowerCase();
+  if (!keyword) return true;
+  if (task.name.toLowerCase().includes(keyword)) return true;
+  if (task.note?.toLowerCase().includes(keyword)) return true;
+  return normalizeTags(task.tags).some((tag) => tag.name.toLowerCase().includes(keyword));
+}
+
 export function getStatus(start?: string, end?: string): "upcoming" | "finished" | "ongoing" {
   const today = getToday();
   if (start && today < start) return "upcoming";

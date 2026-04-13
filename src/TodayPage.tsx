@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, MouseEvent } from "react";
-import { getToday, getStatus, isDoneToday, normalizeTags, getDaysUntilEnd } from "./utils/taskUtils";
+import { getToday, getStatus, isDoneToday, normalizeTags, getDaysUntilEnd, taskMatchesSearch } from "./utils/taskUtils";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import UpcomingTaskItem from "./components/UpcomingTaskItem";
 import TaskModal, { TaskData } from "./components/TaskModal";
@@ -182,11 +182,9 @@ export default function TodayPage() {
   }, [setTasks, setHistoricalTags]);
 
   const ongoingTasks = useMemo(() => {
-    const keyword = nameFilter.trim().toLowerCase();
     return tasks.filter((t: Task) => {
       if (getStatus(t.start, t.end) !== "ongoing") return false;
-      if (keyword && !t.name.toLowerCase().includes(keyword)) return false;
-      return true;
+      return taskMatchesSearch(t, nameFilter);
     });
   }, [tasks, nameFilter]);
 
@@ -194,9 +192,7 @@ export default function TodayPage() {
     () => tasks
       .filter((t: Task) => {
         if (getStatus(t.start, t.end) !== "upcoming") return false;
-        const keyword = nameFilter.trim().toLowerCase();
-        if (keyword && !t.name.toLowerCase().includes(keyword)) return false;
-        return true;
+        return taskMatchesSearch(t, nameFilter);
       })
       .sort((a: Task, b: Task) => {
         const aDays = getDaysUntilEnd(a.start);
@@ -284,7 +280,7 @@ export default function TodayPage() {
           </svg>
           <input
             type="text"
-            placeholder="搜索任务名称…"
+            placeholder="搜索名称、备注或标签…"
             value={nameFilter}
             onChange={(e) => setNameFilter(e.target.value)}
             className="w-full pl-11 pr-11 py-3 text-[15px] rounded-2xl border border-gray-200/80 bg-white shadow-sm focus:outline-none focus:ring-4 focus:ring-gray-100 focus:border-gray-300 transition-all placeholder:text-gray-400"
