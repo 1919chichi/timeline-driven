@@ -23,6 +23,7 @@ import {
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 
 export default function TodayPage() {
+  // 任务列表 + 标签/分组历史（用于输入联想与空分组清理）
   const [tasks, setTasks] = useLocalStorage<Task[]>("timetrackr_tasks", []);
   const [historicalTags, setHistoricalTags] = useLocalStorage<string[]>("timetrackr_historical_tags", []);
   const [historicalGroups, setHistoricalGroups] = useLocalStorage<string[]>("timetrackr_historical_groups", []);
@@ -33,6 +34,7 @@ export default function TodayPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
 
+  /** 整卡「完成」切换：无标签时 logs[today]=true；有标签时一次性写满各标签当日次数。 */
   const toggleTask = useCallback((id: string | number, e: MouseEvent) => {
     if (e) e.stopPropagation();
     const today = getToday();
@@ -64,6 +66,10 @@ export default function TodayPage() {
     );
   }, [setTasks]);
 
+  /**
+   * 单标签点击：在当日 log 上递增该标签计数；从满额再点则归零（可视为撤销该标签一轮）。
+   * 若当日是整卡完成的 `true`，先展开成各标签满额再改单个标签，避免丢状态。
+   */
   const toggleTag = useCallback((id: string | number, tagName: string, maxCount: number, e: MouseEvent) => {
     if (e) e.stopPropagation();
     const today = getToday();
@@ -163,6 +169,7 @@ export default function TodayPage() {
     setShowModal(false);
   }, [setTasks]);
 
+  /** 从所有任务移除该标签，并清理各日 log 里对应字段（保留 boolean 形式的当日记录）。 */
   const deleteTagGlobally = useCallback((tagName: string) => {
     setTasks((prev: Task[]) => prev.map((t: Task) => ({
       ...t,
@@ -213,6 +220,10 @@ export default function TodayPage() {
     return Array.from(groups).sort();
   }, [historicalGroups, ongoingTasks]);
 
+  /**
+   * 进行中列表的扁平顺序：按分组名排序后的各组内任务，再接未分组。
+   * 与下方 UI 分组标题顺序一致，供 SortableContext 与网格展示共用同一顺序。
+   */
   const sortedOngoingTasks = useMemo(() => {
     const ungrouped = ongoingTasks.filter((t: Task) => !t.groupId);
     
@@ -246,6 +257,7 @@ export default function TodayPage() {
     })
   );
 
+  /** 拖到另一任务上时：先继承目标任务的 groupId（跨组即换组），再重排全局 tasks 顺序。 */
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (active && over && active.id !== over.id) {

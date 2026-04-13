@@ -52,6 +52,7 @@ export default function TaskModal({
   const [startDate, setStartDate] = useState(getToday());
   const [endDate, setEndDate] = useState("");
 
+  // 弹层打开时 ESC 关闭（与点击遮罩行为一致）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -64,6 +65,7 @@ export default function TaskModal({
   const readOnlyValueClassName = "w-full min-h-[48px] p-3.5 text-[15px] bg-gray-50 rounded-[16px] text-gray-900 border border-gray-100/50";
   const inputClassName = "w-full border border-gray-200/80 bg-gray-50/50 rounded-[16px] p-3.5 text-[15px] text-gray-900 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-100 focus:border-gray-300 transition-all placeholder:text-gray-400";
 
+  // 切换编辑对象或打开新建时，把 props.task 同步到本地表单状态
   useEffect(() => {
     if (task) {
       setNewName(task.name);
@@ -101,6 +103,7 @@ export default function TaskModal({
       return;
     }
 
+    // 未按回车就保存时，把标签输入框里未提交的文字一并合并进 tags
     let finalTags = [...modalTags];
     if (tagInputValue.trim()) {
       const name = tagInputValue.trim();
@@ -127,6 +130,7 @@ export default function TaskModal({
   };
 
   if (isViewMode) {
+    // 查看模式：点遮罩关闭；内容区 stopPropagation 避免误关
     return (
       <div 
         className="fixed inset-0 bg-gray-900/30 backdrop-blur-md flex items-center justify-center z-50 p-4"
@@ -441,7 +445,7 @@ export default function TaskModal({
               onChange={(e) => {
                 const val = e.target.value;
                 setStartDate(val);
-                
+                // 修改开始日期时默认把结束日期设为「开始 +30 天」，减少手填
                 if (val) {
                   const [year, month, day] = val.split('-').map(Number);
                   const d = new Date(year, month - 1, day);

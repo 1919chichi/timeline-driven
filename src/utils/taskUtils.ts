@@ -19,6 +19,7 @@ export function formatDateInTimeZone(date: Date = new Date(), timeZone: string =
   return `${year}-${month}-${day}`;
 }
 
+/** 「今天」的日历日：先减 2 小时再按本地时区取日期，避免接近午夜时算成前一天/后一天。 */
 export function getToday(): string {
   const now = new Date();
   now.setHours(now.getHours() - 2);
@@ -45,6 +46,10 @@ export function getStatus(start?: string, end?: string): "upcoming" | "finished"
   return "ongoing";
 }
 
+/**
+ * 今日是否算「已完成」：无多标签时 log 为 true 或存在任意键即完成；
+ * 有多标签时需每个标签当日计数 ≥ max。
+ */
 export function isDoneToday(task: Task): boolean {
   const today = getToday();
   const log = task.logs[today];

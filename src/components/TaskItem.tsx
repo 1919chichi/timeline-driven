@@ -35,7 +35,7 @@ export default function TaskItem({
           : "bg-white border-gray-200/60 shadow-[0_2px_12px_rgb(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgb(0,0,0,0.06)] hover:border-gray-300/60 hover:-translate-y-0.5"
       }`}
     >
-      {/* Main Body: Tags / Actions (Moved to Top) */}
+      {/* 有标签：展示各标签进度；无标签：整卡完成按钮 */}
       <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1">
         {hasTags ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -43,6 +43,7 @@ export default function TaskItem({
               const tag =
                 typeof tagObj === "string" ? { name: tagObj, max: 1 } : tagObj;
               const todayLog = task.logs[getToday()];
+              // 与 isDoneToday 一致：整卡 true 视为各标签已满；否则读分标签计数
               const count =
                 todayLog === true
                   ? tag.max
@@ -130,7 +131,7 @@ export default function TaskItem({
         )}
       </div>
 
-      {/* Header section: Title, Reminder, Remark, and Edit button (Moved to Bottom) */}
+      {/* 标题区：截止提醒、账号信息摘要、备注预览、编辑入口 */}
       <div className="flex justify-between items-start w-full px-1 shrink-0">
         <div className="min-w-0 flex-1 pr-4">
           <div className="flex items-center gap-2.5">

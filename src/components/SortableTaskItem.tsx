@@ -12,6 +12,7 @@ interface SortableTaskItemProps {
   openEditModal: (task: Task, e: React.MouseEvent) => void;
 }
 
+/** 为 TaskItem 包一层可排序节点：拖拽由外层 div 处理，内部按钮仍各自 onClick。 */
 export default function SortableTaskItem({
   task,
   toggleTask,
