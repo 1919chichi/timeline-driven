@@ -6,8 +6,27 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 
+/** @type {import("electron").BrowserWindow | null} */
+let mainWindow = null;
+
+const gotTheLock = app.requestSingleInstanceLock();
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    } else {
+      createMainWindow();
+    }
+  });
+}
+
 function createMainWindow() {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1280,
     height: 860,
     minWidth: 1000,
@@ -20,6 +39,10 @@ function createMainWindow() {
     },
   });
 
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
+
   if (isDev) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     return;
@@ -28,18 +51,20 @@ function createMainWindow() {
   mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
 }
 
-app.whenReady().then(() => {
-  createMainWindow();
+if (gotTheLock) {
+  app.whenReady().then(() => {
+    createMainWindow();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createMainWindow();
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) {
+        createMainWindow();
+      }
+    });
+  });
+
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+      app.quit();
     }
   });
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
+}
