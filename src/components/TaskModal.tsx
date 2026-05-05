@@ -247,7 +247,7 @@ export default function TaskModal({
               setNewName(e.target.value);
               if (formError) setFormError("");
             }}
-            placeholder="例如: 少年游"
+            placeholder="填写任务名称或要跟踪的事项"
             className={inputClassName}
           />
         </div>
@@ -412,7 +412,7 @@ export default function TaskModal({
             <input
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
-              placeholder="例如: #359697"
+              placeholder="填写账号编号或业务 ID"
               className={inputClassName}
             />
           </div>
@@ -421,7 +421,7 @@ export default function TaskModal({
             <input
               value={accountInfo}
               onChange={(e) => setAccountInfo(e.target.value)}
-              placeholder="例如: 春区酪酪"
+              placeholder="填写区服、角色名或账号备注"
               className={inputClassName}
             />
           </div>
@@ -430,7 +430,7 @@ export default function TaskModal({
             <input
               value={coopInfo}
               onChange={(e) => setCoopInfo(e.target.value)}
-              placeholder="例如: 邮箱"
+              placeholder="填写协作账号或备用说明"
               className={inputClassName}
             />
           </div>
