@@ -469,24 +469,13 @@ export default function TodayPage() {
         setShowModal(false);
     }, [setTasks]);
 
-    /** 从所有任务移除该标签，并清理各日 log 里对应字段（保留 boolean 形式的当日记录）。 */
+    /**
+     * 仅把标签从「历史标签建议库」里移除，不动任何任务里已使用的同名标签及其打卡记录。
+     * 这样在新建任务的建议列表里删一个标签，不会牵连其它任务的数据。
+     */
     const deleteTagGlobally = useCallback((tagName: string) => {
-        setTasks((prev: Task[]) => prev.map((t: Task) => ({
-            ...t,
-            tags: (t.tags || []).filter((tag: string | Tag) => {
-                if (typeof tag === 'string') return tag !== tagName;
-                return tag.name !== tagName;
-            }),
-            logs: Object.fromEntries(
-                Object.entries(t.logs || {}).map(([date, val]) => {
-                    if (val === true) return [date, val];
-                    const {[tagName]: _, ...rest} = val as Record<string, number>;
-                    return [date, rest];
-                })
-            )
-        })));
         setHistoricalTags((prev: string[]) => prev.filter((t: string) => t !== tagName));
-    }, [setTasks, setHistoricalTags]);
+    }, [setHistoricalTags]);
 
     const ongoingTasks = useMemo(() => {
         return tasks.filter((t: Task) => {
