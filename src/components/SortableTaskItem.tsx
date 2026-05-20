@@ -1,3 +1,11 @@
+/**
+ * SortableTaskItem —— 把 TaskItem 包成 @dnd-kit 可排序节点。
+ *
+ * - 仅负责拖拽相关的 ref / transform / listeners 绑定，业务渲染完全交给内部的 TaskItem。
+ * - 拖动中通过 opacity 与 zIndex 给出视觉反馈；拖拽监听挂在外层 div，
+ *   内部按钮（标签打卡、编辑等）的 onClick 不受影响。
+ * - 在 TodayPage 的 ongoing 区域使用；upcoming 区域不参与拖拽，因此用 UpcomingTaskItem。
+ */
 import React from 'react';
 import {useSortable} from '@dnd-kit/sortable';
 import {CSS} from '@dnd-kit/utilities';

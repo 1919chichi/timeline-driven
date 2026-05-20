@@ -1,3 +1,15 @@
+/**
+ * 全局共享类型定义。
+ *
+ * - Tag：任务上挂的子标签，每天需打卡 `max` 次。
+ * - Task：核心数据结构，存储于 localStorage["timetrackr_tasks"]。
+ *
+ * 修改 Task 字段时务必同步：
+ * 1) `utils/taskUtils.ts` 的完成判定逻辑；
+ * 2) `TodayPage.tsx` 的 `normalizeImportedTask` 导入兼容；
+ * 3) `TaskModal.tsx` 的表单字段。
+ */
+
 /** 任务类型标签：max 表示该标签每天需点击完成的次数。 */
 export interface Tag {
   name: string;

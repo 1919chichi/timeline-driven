@@ -1,3 +1,14 @@
+/**
+ * TaskItem —— 「进行中」任务卡片（ongoing 状态）。
+ *
+ * 渲染规则：
+ * - 无标签：整卡显示一个「标记完成 / 已完成」大按钮，点击触发 toggleTask。
+ * - 有标签：显示标签网格，每个标签按 max 显示 `count/max` 进度，点击触发 toggleTag。
+ * - 卡片本身可点击，打开查看弹窗（openViewModal）；右上角悬浮显示「编辑」按钮。
+ * - 临近截止（≤3 天且未完成）时在标题右侧显示红色「仅剩 N 天 / 今天结束」提醒。
+ *
+ * 注意：本组件只读取 props、调用回调，不直接修改 task。所有状态变更必须经由 TodayPage 的 setTasks。
+ */
 import React from "react";
 import { getToday, isDoneToday, getDaysUntilEnd } from "../utils/taskUtils";
 import { Task } from "../types";

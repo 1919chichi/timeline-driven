@@ -1,3 +1,15 @@
+/**
+ * TodayPage —— PhaseDo 唯一的主页面。
+ *
+ * 职责：
+ * - 承载全部应用状态（tasks / historicalTags / historicalGroups），通过 useLocalStorage 持久化。
+ * - 提供任务的增删改、整卡/单标签打卡、按分组渲染、拖拽排序、关键词搜索、JSON 导入导出能力。
+ * - 子组件（SortableTaskItem / TaskItem / UpcomingTaskItem / TaskModal）均为受控的展示型组件，
+ *   所有数据变更动作通过回调回流到本文件统一更新。
+ *
+ * 文件内顶层定义了一组导入数据规范化函数（normalizeImport*），用于把外部 JSON 安全地
+ * 转成内部 Task 结构，并对 id 去重。
+ */
 import React, {useState, useCallback, useMemo, useEffect, useRef, ChangeEvent, MouseEvent} from "react";
 import {getToday, getStatus, isDoneToday, normalizeTags, getDaysUntilEnd, taskMatchesSearch} from "./utils/taskUtils";
 import {useLocalStorage} from "./hooks/useLocalStorage";

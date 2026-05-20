@@ -1,3 +1,17 @@
+/**
+ * TaskModal —— 任务弹窗，承担「新建 / 编辑 / 查看」三种模式。
+ *
+ * 模式（由 props.mode 决定）：
+ * - "create"：task=null，所有字段为空，标题「新建任务」，确认按钮「确定添加」。
+ * - "edit"  ：task!=null，表单回填已有值，标题「编辑任务」，提供「删除」按钮。
+ * - "view"  ：纯只读展示，所有字段渲染为灰底只读块。
+ *
+ * 其他要点：
+ * - 标签输入支持回车提交、Backspace 删尾、+/- 调整 max、× 删除、点击历史标签快速复用。
+ * - 修改开始日期会自动把结束日期推到「开始 +30 天」；也可点「+30 天」按钮叠加。
+ * - 关闭：点击遮罩或按 ESC；内容区域 stopPropagation 防止误关。
+ * - 该组件是受控的，本身不写存储；所有变更通过 onSave / onDelete / onDeleteTag 回调到 TodayPage。
+ */
 import { useState, useEffect } from 'react';
 import { getToday } from '../utils/taskUtils';
 import { Task, Tag } from '../types';

@@ -1,3 +1,15 @@
+/**
+ * taskUtils —— 任务领域的纯函数工具集。
+ *
+ * 包含：
+ * - 日期：getCurrentTimeZone / formatDateInTimeZone / getToday / getDaysUntilEnd
+ * - 标签：normalizeTags（把 string|Tag 混合数组归一为 Tag[]）
+ * - 状态：getStatus（upcoming/ongoing/finished）
+ * - 完成判定：isDoneToday / hasAnyProgressToday / getCompletionRate
+ * - 搜索：taskMatchesSearch
+ *
+ * 设计原则：所有函数必须是无副作用的纯函数，便于在组件渲染与回调中自由调用。
+ */
 import { Task, Tag } from "../types";
 
 export function getCurrentTimeZone(): string {

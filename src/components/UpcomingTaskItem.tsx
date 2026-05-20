@@ -1,3 +1,11 @@
+/**
+ * UpcomingTaskItem —— 「未开始」任务卡片（upcoming 状态）。
+ *
+ * 与 TaskItem 的差异：
+ * - 不展示打卡按钮，也不参与拖拽排序；标签只静态显示 `xN` 频次，不可点击。
+ * - 整卡背景更淡（白色半透明 + 模糊），形成与 ongoing 卡的视觉分层。
+ * - 仅支持「点击卡片打开查看」与「悬浮显示编辑按钮」。
+ */
 import React from 'react';
 import { getDaysUntilEnd } from '../utils/taskUtils';
 import { Task } from '../types';
